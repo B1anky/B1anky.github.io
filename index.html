@@ -1280,13 +1280,15 @@ function evaluateRound3Win(choice, currentCard, allDrawnCards) {
         return true; // Treat as loss
     }
     // The range is defined by the first two cards of the game for this player in this implementation
-    const minVal = Math.min(allDrawnCards[0], allDrawnCards[1]);
-    const maxVal = Math.max(allDrawnCards[0], allDrawnCards[1]);
+    const card1Val = getCardValue(allDrawnCards[0].value);
+    const card2Val = getCardValue(allDrawnCards[1].value);
+    const minVal = Math.min(card1Val, card2Val);
+    const maxVal = Math.max(card1Val, card2Val);
     console.log(`[evaluateRound3Win] minVal: ${minVal}, maxVal: ${maxVal}`);
     const currentCardVal = getCardValue(currentCard.value);
 
     if (choice === CHOICE_OUTSIDE) {
-        return currentCardVal > minVal && currentCardVal < maxVal;
+        return currentCardVal >= minVal && currentCardVal <= maxVal;
     }
     
     return currentCardVal < minVal || currentCardVal > maxVal;

@@ -2,495 +2,718 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Ride the Bus - Chip Counter (Canvas)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ride the Bus - Card Game</title>
   <style>
+    :root {
+      --ncc-bg: #10101a;
+      --ncc-panel: #18182a;
+      --ncc-card: #23233a;
+      --ncc-accent: #00fff7;
+      --ncc-accent2: #ff00e0;
+      --ncc-accent3: #00ff85;
+      --ncc-error: #ff3333;
+      --ncc-text: #e0e0ff;
+      --ncc-text2: #a0a0cc;
+      --ncc-border: #2afcff;
+      --ncc-shadow: 0 2px 16px 0 rgba(0,255,255,0.08);
+      --ncc-radius: 10px;
+      --ncc-font: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+    }
+
+    [data-theme="light"] {
+      --ncc-bg: #f8f9fa; 
+      --ncc-panel: #ffffff; 
+      --ncc-card: #e9ecef; 
+      --ncc-accent: #007bff; 
+      --ncc-accent2: #6f42c1; 
+      --ncc-accent3: #28a745; 
+      --ncc-error: #dc3545; 
+      --ncc-text: #212529; 
+      --ncc-text2: #6c757d; 
+      --ncc-border: #007bff; 
+      --ncc-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    [data-theme="dark-standard"] {
+      --ncc-bg: #212529; 
+      --ncc-panel: #343a40; 
+      --ncc-card: #495057; 
+      --ncc-accent: #0d6efd; 
+      --ncc-accent2: #8f6bf8; /* Lighter purple */
+      --ncc-accent3: #20c997; /* Teal/Green */
+      --ncc-error: #ff6b6b; 
+      --ncc-text: #f8f9fa; 
+      --ncc-text2: #adb5bd; 
+      --ncc-border: #0d6efd; 
+      --ncc-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    [data-theme="casino-green"] {
+      --ncc-bg: #1D7223; 
+      --ncc-panel: #2A8A32; 
+      --ncc-card: #227528; 
+      --ncc-accent: #FFD700; /* Gold */
+      --ncc-accent2: #E0C200; /* Darker Gold */
+      --ncc-accent3: #B8860B; /* DarkGoldenRod for some borders/texts if needed */
+      --ncc-error: #FF6347; /* Tomato Red */
+      --ncc-text: #FFFFFF; 
+      --ncc-text2: #E0E0E0; 
+      --ncc-border: #FFD700; 
+      --ncc-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    html {
+      box-sizing: border-box;
+      overflow-x: hidden; /* Prevent horizontal scroll on html */
+    }
+    *,
+    *::before,
+    *::after {
+      box-sizing: inherit;
+    }
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    canvas {
-      border: 1px solid #ccc;
-      background: #f9f9f9;
-      cursor: pointer;
-    }
-    input, button {
-      margin: 5px;
-      padding: 5px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .mult-button {
-      padding: 10px 20px;
-      margin: 5px;
-      border: 2px solid #ccc;
-      cursor: pointer;
-      font-size: 16px;
-      border-radius: 5px;
-      background-color: white;
-    }
-    .mult-0x {
-      color: red;
-    }
-    .mult-2x {
-      color: black;
-    }
-    .mult-3x {
-      color: lightblue;
-    }
-    .mult-4x {
-      color: green;
-    }
-    .mult-20x {
-      color: transparent;
-      background-image: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
-      background-clip: text;
-      -webkit-background-clip: text;
-      font-weight: bold;
-      border: 2px solid #ccc;
-      border-radius: 5px;
-      background-color: white;
-    }
-    .disabled {
-      background-color: #ddd;
-      cursor: not-allowed;
-    }
-
-    body.dark {
-      background-color: #121212;
-      color: #f0f0f0;
-    }
-    body.dark canvas {
-      background: #1e1e1e;
-      border-color: #444;
-    }
-    body.dark input, body.dark button {
-      background-color: #333;
-      color: #f0f0f0;
-      border: 1px solid #777;
-    }
-    body.dark .mult-button {
-      border-color: #666;
-      background-color: #222;
-      color: #f0f0f0;
-    }
-    body.dark .mult-0x { color: red; }
-    body.dark .mult-2x { color: #f0f0f0; }
-    body.dark .mult-3x { color: lightblue; }
-    body.dark .mult-4x { color: lightgreen; }
-    body.dark .mult-20x {
-      color: transparent;
-      background-image: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
-      background-clip: text;
-      -webkit-background-clip: text;
-      border-color: #666;
-      background-color: #222;
-    }
-
-    .game-container {
+      background: var(--ncc-bg);
+      color: var(--ncc-text);
+      font-family: var(--ncc-font);
+      margin: 0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      margin: 20px;
+      overflow-x: hidden; /* Prevent horizontal scroll on body */
     }
-    
-    .top-controls {
-      display: flex;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+    header {
       width: 100%;
-      align-items: center;
-      gap: 20px;
-    }
-    
-    .top-controls-player-segment {
-      flex: 1;
-      min-width: 300px;
+      background: var(--ncc-panel);
+      border-bottom: 2px solid var(--ncc-border);
+      box-shadow: var(--ncc-shadow);
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
+      padding: 0.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
-    
-    .top-controls-card-segment {
-      flex: 1;
-      min-width: 300px;
+    .game-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--ncc-accent);
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px var(--ncc-accent);
     }
-    
-    .top-controls .draw-button {
-      margin: 0;
-    }
-    
-    .game-area {
+    .header-controls {
       display: flex;
-      gap: 20px;
-      width: 100%;
+      gap: 0.7rem; /* Adjusted gap for potentially wider select */
     }
-    
-    .player-area {
-      flex: 2;
-      min-width: 300px;
-      margin: 0;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      text-align: left;
-    }
-    
-    .card-area {
-      flex: 1;
-      min-width: 300px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    
-    .deck {
-      width: 100px;
-      height: 140px;
-      border: 2px solid #333;
-      border-radius: 8px;
-      margin: 10px auto;
+    .header-controls button {
+      background: none;
+      color: var(--ncc-accent);
+      border: 1.5px solid var(--ncc-accent);
+      border-radius: var(--ncc-radius);
+      padding: 0.5rem 1.2rem;
+      font-size: 1rem;
+      font-family: var(--ncc-font);
       cursor: pointer;
-      background: #fff;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+    }
+    .header-controls button:hover {
+      background: var(--ncc-accent);
+      color: var(--ncc-bg);
+      border-color: var(--ncc-accent2);
+    }
+    .header-theme-select {
+      background: var(--ncc-panel); /* Themed background */
+      color: var(--ncc-text); /* Themed text */
+      border: 1.5px solid var(--ncc-border); /* Themed border */
+      border-radius: var(--ncc-radius);
+      padding: 0.4rem 0.8rem; /* Adjusted padding */
+      font-family: var(--ncc-font);
+      font-size: 0.9rem; /* Slightly smaller font if needed */
+      cursor: pointer;
+      outline: none;
+    }
+    .header-theme-select:focus {
+      border-color: var(--ncc-accent2); /* Focus highlight */
+    }
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.5fr 2fr 1fr;
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .panel {
+      background: var(--ncc-panel);
+      border-radius: var(--ncc-radius);
+      box-shadow: var(--ncc-shadow);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .game-board-panel {
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
       position: relative;
     }
-    
-    .deck::after {
-      content: var(--deck-content);
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
+    .round-info, .round-multiplier {
+      background: var(--ncc-card);
+      color: var(--ncc-accent);
+      border-radius: var(--ncc-radius);
+      box-shadow: 0 0 10px 0 var(--ncc-accent), var(--ncc-shadow);
+      border: 1.5px solid var(--ncc-accent);
+      padding: 0.7rem 1.2rem;
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+      letter-spacing: 0.5px;
     }
-    
+    .round-multiplier {
+      color: var(--ncc-accent2);
+      border-color: var(--ncc-accent2);
+      box-shadow: 0 0 10px 0 var(--ncc-accent2), var(--ncc-shadow);
+      margin-bottom: 1.1rem;
+    }
+    .deck {
+      width: 110px;
+      height: 160px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--ncc-accent2) 0%, var(--ncc-accent) 100%);
+      box-shadow: 0 0 18px 2px var(--ncc-accent), 0 2px 16px 0 rgba(0,255,255,0.10);
+      border: 2.5px solid var(--ncc-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 0.5rem 0 1.2rem 0;
+      font-size: 2.2rem;
+      color: var(--ncc-bg);
+      font-weight: bold;
+      user-select: none;
+      transition: box-shadow 0.2s, border 0.2s;
+    }
+    .deck::after {
+      content: attr(data-count) " left";
+      position: absolute;
+      bottom: 10px;
+      right: 0;
+      left: 0;
+      text-align: center;
+      font-size: 1.1rem;
+      color: white; /* High contrast base color */
+      font-weight: 600;
+      /* Outline effect for readability */
+      -webkit-text-stroke: 0.8px black;
+      paint-order: stroke fill; /* Ensures stroke is behind the fill */
+      text-shadow:
+        0px 0px 3px black, /* Softer general shadow for depth */
+        0 0 5px var(--ncc-accent3); /* Keep a hint of the theme accent */
+      opacity: 0.95; /* Slightly more opaque */
+    }
     .drawn-cards {
       display: flex;
-      gap: 10px;
-      margin-top: 20px;
-      min-height: 140px;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      justify-content: center;
+      align-items: flex-end;
+      margin-bottom: 0.7rem;
+      width: 100%;
+      min-height: 170px;
     }
-    
     .card {
-      width: 100px;
-      height: 140px;
-      border: 1px solid #333;
-      border-radius: 8px;
+      width: 90px;
+      height: 130px;
+      border-radius: 10px;
+      background: var(--ncc-panel);
+      border: 2px solid var(--ncc-accent2);
+      box-shadow: 0 0 10px 0 var(--ncc-accent2), var(--ncc-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--ncc-text);
+      position: relative;
+      text-shadow: 0 0 8px var(--ncc-accent2);
+      transition: box-shadow 0.2s, border 0.2s;
+      user-select: none;
+    }
+    .card.drawn-card-target {
+      opacity: 0;
+      /* Transition for fade-in once ghost animation is done */
+      transition: opacity 0.2s ease-in;
+    }
+    .card[style*="color: red"] {
+      color: var(--ncc-error) !important;
+      border-color: var(--ncc-error);
+      text-shadow: 0 0 8px var(--ncc-error);
+    }
+    .card[style*="color: black"] {
+      color: var(--ncc-accent3) !important;
+      border-color: var(--ncc-accent3);
+      text-shadow: 0 0 8px var(--ncc-accent3);
+    }
+    .draw-button, #drawCardButton {
+      background: var(--ncc-accent);
+      color: var(--ncc-bg);
+      border: 2px solid var(--ncc-accent2);
+      border-radius: var(--ncc-radius);
+      padding: 0.7rem 2.2rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      box-shadow: 0 0 10px 0 var(--ncc-accent), var(--ncc-shadow);
+      cursor: pointer;
+      margin-top: 0.7rem;
+      margin-bottom: 0.2rem;
+      transition: background 0.18s, color 0.18s, border 0.18s;
+    }
+    .draw-button:hover, #drawCardButton:hover {
+      background: var(--ncc-accent2);
+      color: var(--ncc-bg);
+      border-color: var(--ncc-accent);
+    }
+    .draw-button:disabled, #drawCardButton:disabled {
+      background: var(--ncc-panel);
+      color: var(--ncc-text2);
+      border-color: var(--ncc-accent3);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .players-panel {
+      min-width: 260px;
+      gap: 0.7rem;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: #fff;
+      align-items: stretch;
+      justify-content: flex-start;
     }
-    
-    .player-choice {
-      display: flex;
-      gap: 10px;
-      margin: 5px 0;
-    }
-    
-    .choice-button {
-      padding: 5px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    
-    .choice-button.selected {
-      background-color: #4CAF50;
-      color: white;
-    }
-    
-    .round-info {
-      margin: 10px 0;
-      padding: 10px;
-      background: #f0f0f0;
-      border-radius: 4px;
-    }
-    
-    body.dark .card-area {
-      border-color: #666;
-    }
-    
-    body.dark .deck,
-    body.dark .card {
-      border-color: #666;
-      background: #333;
-      color: #fff;
-    }
-    
-    body.dark .round-info {
-      background: #333;
-    }
-
-    .round-multiplier {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin: 10px 0;
-      padding: 5px;
-      border-radius: 4px;
-      background: #f0f0f0;
-    }
-    
-    .player-bet-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 5px 0;
-    }
-    
-    .bet-button {
-      padding: 5px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      cursor: pointer;
-      background: white;
-    }
-    
-    .bet-button.selected {
-      background: #4CAF50;
-      color: white;
-    }
-    
-    .cash-out-button {
-      padding: 5px 10px;
-      background: #ffd700;
-      border: 1px solid #cca300;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    
-    body.dark .round-multiplier {
-      background: #333;
-    }
-    
-    body.dark .bet-button {
-      background: #333;
-      color: #fff;
-      border-color: #666;
-    }
-    
-    body.dark .bet-button.selected {
-      background: #2e7d32;
-    }
-    
-    body.dark .cash-out-button {
-      background: #b8860b;
-      border-color: #8b6914;
-      color: #fff;
-    }
-
-    .draw-button {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      font-size: 18px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    .draw-button:hover {
-      background-color: #45a049;
-    }
-
-    .draw-button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-
     .player-controls {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      margin-right: 0;
+      margin-bottom: 0;
+    }
+    .player-controls:hover,
+    .player-controls:focus-within {
+      box-shadow: 0 0 18px 2px var(--ncc-accent), 0 2px 16px 0 rgba(0,255,255,0.10);
+      border-color: var(--ncc-accent);
+    }
+    .player-header-row, .player-bet-row, .choice-buttons {
       display: flex;
-      gap: 10px;
+      flex-direction: row;
       align-items: center;
-      margin-bottom: 10px;
+      gap: 0.18rem;
+      margin-bottom: 0;
     }
-
-    .player-name, .player-chips, .player-bet, .choice-buttons {
-      height: 40px;
-      display: flex;
-      align-items: center;
-      box-sizing: border-box;
+    .player-header-row {
+      justify-content: space-between;
     }
-
-    .player-name {
-      /* flex-basis: 150px; */ /* JS will set this */
-      min-width: 100px; /* Fallback min-width */
-      flex-shrink: 0; 
-      overflow: hidden;
+    .player-name, .player-chips {
+      font-size: 0.97rem;
+      font-weight: 600;
+      margin: 0;
     }
-
-    .player-chips {
-      /* flex-basis: 120px; */ /* JS will set this */
-      min-width: 80px; /* Fallback min-width */
-      flex-shrink: 0;
-      text-align: right; 
-      justify-content: flex-end;
+    .player-bet-row input[type="number"] {
+      padding: 0.18rem 0.4rem;
+      font-size: 0.95rem;
+      background: var(--ncc-panel);
+      color: var(--ncc-text);
+      border: 1.5px solid var(--ncc-border);
+      border-radius: 6px;
+      transition: border-color 0.2s;
+      font-family: var(--ncc-font);
+      min-width: 3.5rem;
+      max-width: 7rem;
+      text-align: right;
+      -moz-appearance: textfield;
     }
-
-    .player-bet {
-      /* flex-basis: 220px; */ /* JS will set this */
-      min-width: 150px; /* Fallback min-width */
-      flex-shrink: 0;
+    .player-bet-row input[type="number"]::-webkit-outer-spin-button,
+    .player-bet-row input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
-
-    .choice-buttons {
-      /* flex-basis: 200px; */ /* JS will set this */
-      min-width: 150px; /* Fallback min-width */
-      flex-shrink: 0;
-      flex-wrap: wrap; 
+    .player-bet-row input[type="number"]:focus {
+      border-color: var(--ncc-accent2);
+      outline: none;
+      box-shadow: 0 0 8px 0 var(--ncc-accent2);
     }
-
-    .choice-buttons button {
-      padding: 8px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    .player-bet-row button,
+    .player-bet-row .use-last-bet-button {
+      padding: 0.18rem 0.5rem;
+      font-size: 0.95rem;
+      background: none;
+      color: var(--ncc-accent3);
+      border: 1.5px solid var(--ncc-accent3);
+      border-radius: var(--ncc-radius);
       cursor: pointer;
-      font-size: 14px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .player-bet-row button:hover,
+    .player-bet-row .use-last-bet-button:hover {
+      background: var(--ncc-accent3);
+      color: var(--ncc-bg);
+    }
+    .choice-buttons > button {
       min-width: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      box-sizing: border-box;
+      padding: 0.22rem 0.6rem;
+      font-size: 0.97rem;
+      background: var(--ncc-panel);
+      color: var(--ncc-accent);
+      border: 1.5px solid var(--ncc-accent);
+      border-radius: var(--ncc-radius);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
     }
-
-    .choice-buttons button:hover {
-      background-color: #f0f0f0;
+    .choice-buttons > button:hover {
+      background: var(--ncc-accent);
+      color: var(--ncc-bg);
+      border-color: var(--ncc-accent);
     }
-
-    .selected-player {
-      color: #4CAF50;
+    .choice-button.selected,
+    .choice-button:active {
+      background: var(--ncc-accent2);
+      border-color: var(--ncc-accent2);
+      color: var(--ncc-bg);
+      box-shadow: 0 0 8px 0 var(--ncc-accent2), 0 0 12px 0 var(--ncc-accent2) inset;
+    }
+    .choice-button:focus {
+      outline: 2px solid var(--ncc-accent2);
+      outline-offset: 1px;
+    }
+    .cash-out-button {
+      background: var(--ncc-accent3);
+      border-color: var(--ncc-accent3);
+      color: var(--ncc-bg);
       font-weight: bold;
+      padding: 0.22rem 0.6rem;
+      font-size: 0.97rem;
+      border-radius: var(--ncc-radius);
       cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
-
     .cash-out-button:hover {
-      background-color: #ffed4a;
+      background: var(--ncc-accent2);
+      border-color: var(--ncc-accent2);
+      color: var(--ncc-bg);
     }
-
-    .wall-of-shame {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background-color: #f9f9f9;
-    }
-
-    .wall-of-shame h3 {
-      margin-top: 0;
-      color: #c00;
-    }
-
-    .wall-of-shame p {
-      margin: 5px 0;
-    }
-
-    body.dark .wall-of-shame {
-      background-color: #1e1e1e;
-      border-color: #444;
-    }
-
-    body.dark .wall-of-shame h3 {
-      color: #ff4d4d;
-    }
-
-    .player-bet input[type="number"] {
-      flex-grow: 1;
-      height: 100%;
-      box-sizing: border-box;
-      padding: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-
-    .player-bet button {
-      height: 100%;
-      box-sizing: border-box;
-      padding: 8px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    select.choice-button {
+      background: var(--ncc-panel);
+      color: var(--ncc-accent);
+      border: 1.5px solid var(--ncc-accent);
+      font-weight: 600;
+      min-width: 110px;
+      padding: 0.22rem 0.6rem;
+      font-size: 0.97rem;
+      border-radius: var(--ncc-radius);
       cursor: pointer;
-      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    select.choice-button:focus {
+      outline: 2px solid var(--ncc-accent2);
+      border-color: var(--ncc-accent2);
+    }
+    .aux-panel {
+      min-width: 220px;
+      max-width: 350px;
+      gap: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .aux-card {
+      background: var(--ncc-card);
+      border-radius: var(--ncc-radius);
+      box-shadow: 0 0 12px 0 var(--ncc-accent2), var(--ncc-shadow);
+      border: 1.5px solid var(--ncc-border);
+      padding: 1.1rem 1rem 1.2rem 1rem;
+      margin-bottom: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      position: relative;
+    }
+    .aux-card:last-child {
+      margin-bottom: 0;
+    }
+    .aux-card h3, .aux-card h4 {
+      color: var(--ncc-accent2);
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 0 0 0.7rem 0;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 6px var(--ncc-accent2);
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 0.5rem;
     }
-
-    body.dark #debugArea {
-      background-color: #1e1e1e; /* Match other dark theme sections */
-      border-color: #444;    /* Match other dark theme borders */
-      color: #f0f0f0;        /* Default dark theme text color */
+    .aux-card .icon {
+      font-size: 1.2em;
+      margin-right: 0.3em;
+    }
+    .add-player-form input[type="text"],
+    .add-player-form input[type="number"] {
+      background: var(--ncc-panel);
+      color: var(--ncc-text);
+      border: 1.5px solid var(--ncc-border);
+      border-radius: 6px;
+      padding: 0.5rem 0.8rem;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      transition: border 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .add-player-form input[type="text"]:focus,
+    .add-player-form input[type="number"]:focus {
+      border-color: var(--ncc-accent2);
+      outline: none;
+    }
+    .add-player-form button {
+      background: var(--ncc-accent3);
+      color: var(--ncc-bg);
+      border: 1.5px solid var(--ncc-accent3);
+      border-radius: 6px;
+      padding: 0.5rem 1.1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s, border 0.18s;
+      width: 100%;
+      margin-top: 0.2rem;
+    }
+    .add-player-form button:hover {
+      background: var(--ncc-accent2);
+      color: var(--ncc-bg);
+      border-color: var(--ncc-accent2);
+    }
+    .wall-of-shame {
+      background: var(--ncc-panel);
+      border-radius: var(--ncc-radius);
+      border: 1.5px solid var(--ncc-error);
+      box-shadow: 0 0 12px 0 var(--ncc-error), var(--ncc-shadow);
+      padding: 0.8rem 0.8rem 0.7rem 0.8rem;
+      margin-bottom: 0.5rem;
+      color: var(--ncc-error);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .wall-of-shame h3 {
+      color: var(--ncc-error);
+      text-shadow: 0 0 6px var(--ncc-error);
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .wall-of-shame p {
+      margin: 0.2rem 0 0.2rem 0.5rem;
+      color: var(--ncc-error);
+      font-size: 0.98rem;
+    }
+    #debugArea {
+      background: var(--ncc-panel);
+      border-radius: var(--ncc-radius);
+      border: 1.5px solid var(--ncc-accent3);
+      box-shadow: 0 0 10px 0 var(--ncc-accent3), var(--ncc-shadow);
+      padding: 0.7rem 0.8rem 0.7rem 0.8rem;
+      margin-bottom: 0.5rem;
+      color: var(--ncc-accent3);
+      font-size: 0.98rem;
+    }
+    #debugArea h4 {
+      color: var(--ncc-accent3);
+      text-shadow: 0 0 6px var(--ncc-accent3);
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+    }
+    #debugArea label {
+      color: var(--ncc-text2);
+      font-size: 0.97rem;
+    }
+    #debugNextCard {
+      margin-top: 0.4rem;
+      font-weight: bold;
+      min-height: 20px;
+      color: var(--ncc-accent2);
+      text-shadow: 0 0 6px var(--ncc-accent2);
+    }
+    @media (max-width: 1100px) {
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 1.2rem;
+        padding: 1rem;
+      }
+      .panel {
+        min-width: 0;
+        max-width: 100%;
+      }
+      .players-panel {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        justify-content: flex-start;
+        align-items: stretch;
+      }
+      .player-controls {
+        min-width: 180px;
+        max-width: 100%;
+        flex: 1 1 220px;
+        margin-bottom: 0.7rem;
+        margin-right: 0.7rem;
+      }
+      .aux-panel {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .aux-card {
+        padding: 0.7rem 0.5rem 0.8rem 0.5rem;
+      }
+    }
+    @media (max-width: 700px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.7rem 1rem;
+        gap: 0.5rem;
+      }
+      .game-title {
+        font-size: 1.3rem;
+      }
+      main {
+        padding: 0.5rem;
+        gap: 0.7rem;
+      }
+      .panel {
+        padding: 0.7rem 0.5rem;
+      }
+      .players-panel {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0.7rem;
+      }
+      .player-controls {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 0.7rem;
+        margin-right: 0;
+      }
+      .player-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+      }
+      .player-chips {
+        margin-left: 0;
+        margin-top: 0.2rem;
+      }
+      .player-bet-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.3rem;
+      }
+      .choice-buttons {
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      .game-board-panel {
+        min-height: 180px;
+        gap: 0.7rem;
+        padding: 0.2rem;
+      }
+      .deck {
+        width: 55px;
+        height: 75px;
+        font-size: 1rem;
+      }
+      .drawn-cards {
+        min-height: 60px;
+        gap: 0.2rem;
+      }
+      .card {
+        width: 38px;
+        height: 55px;
+        font-size: 0.8rem;
+      }
+      .round-info, .round-multiplier {
+        font-size: 0.9rem;
+        padding: 0.3rem 0.4rem;
+      }
+      .aux-panel {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .aux-card {
+        padding: 0.5rem 0.3rem 0.6rem 0.3rem;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Ride the Bus - Card Game</h1>
-
-  <div class="game-container">
-    <div class="top-controls">
-      <div class="top-controls-player-segment">
-        <div style="display: flex; gap: 10px;">
-          <button onclick="resetPlayers()">Reset All Players</button>
-          <button onclick="toggleTheme()">Toggle Dark Mode</button>
-        </div>
-        <div style="display: flex; gap: 10px;">
-          <button id="newGameButton" class="draw-button" onclick="startNewGame()">New Game</button>
-          <button id="drawCardButton" class="draw-button" onclick="drawCard()" style="display:none">Draw Card</button>
-        </div>
-      </div>
-      <div class="top-controls-card-segment">
-        <!-- Empty, serves to correctly proportion the player segment -->
-      </div>
+  <header>
+    <div class="game-title">Ride the Bus - Card Game</div>
+    <div class="header-controls">
+      <button id="resetPlayersButton">Reset</button>
+      <select id="themeSelector" class="header-theme-select">
+        <option value="neon" style="background-color: #10101a; color: #00fff7;">Neon Glow</option>
+        <option value="light" style="background-color: #f8f9fa; color: #212529;">Bright Day</option>
+        <option value="dark-standard" style="background-color: #212529; color: #f8f9fa;">Classic Dark</option>
+        <option value="casino-green" style="background-color: #1D7223; color: #FFD700;">Casino Night</option>
+      </select>
     </div>
-
-    <div class="game-area">
-      <div id="playerArea" class="player-area">
-        <!-- Player controls will be dynamically added here -->
+  </header>
+  <main>
+    <section class="panel players-panel" id="playersPanel">
+      <!-- Player cards will go here -->
+    </section>
+    <section class="panel game-board-panel" id="gameBoardPanel">
+      <div class="round-info" id="roundInfo">Round info here</div>
+      <div class="round-multiplier" id="roundMultiplier">Multiplier info here</div>
+      <div class="deck" id="deck" data-count="0"></div>
+      <div class="drawn-cards" id="drawnCards"></div>
+      <button class="draw-button" id="newGameButton" style="display:none;">New Game</button>
+      <button class="draw-button" id="drawCardButton" style="display:none">Draw Card</button>
+    </section>
+    <aside class="panel aux-panel" id="auxPanel">
+      <div class="aux-card" id="addPlayerCard">
+        <h3><span class="icon">➕</span>Add Player / Apply for Financial Assistance</h3>
+        <form class="add-player-form" onsubmit="event.preventDefault(); handleAddPlayerOrLoan();">
+          <input type="text" id="newPlayerNameInput" list="playerDatalist" placeholder="New Player Name" />
+          <datalist id="playerDatalist"></datalist>
+          <input type="number" id="newPlayerChipsInput" placeholder="Starting Chips" min="0" />
+          <button id="newAddPlayerButton" type="submit">Add Player</button>
+        </form>
       </div>
-      
-      <div class="card-area">
-        <div class="round-info" id="roundInfo">
-          Round 1: Guess if the card is Red or Black
+      <div class="aux-card wall-of-shame" id="wallOfShameArea" style="display: none;">
+        <h3><span class="icon">⚡</span>Wall of Shame</h3>
+        <div id="wallOfShameContent"></div>
+      </div>
+      <div class="aux-card" id="debugArea" style="display: none; margin-top: 15px;">
+        <h4><span class="icon">🐞</span>Debug Info</h4>
+        <div>
+          <label for="toggleDebugNextCard">Show Next Card: </label>
+          <input type="checkbox" id="toggleDebugNextCard" onchange="updateDebugNextCardDisplay()">
         </div>
-        
-        <div class="round-multiplier" id="roundMultiplier">
-          Current Round: 1 (2x multiplier if you cash out)
+        <div id="debugNextCard" style="margin-top: 5px; font-weight: bold; min-height: 20px;">
+          Next Card: (Hidden)
         </div>
-        
-        <div class="deck" id="deck"></div>
-        
-        <div class="drawn-cards" id="drawnCards"></div>
       </div>
-    </div>
-
-    <div id="wallOfShameArea" class="wall-of-shame" style="display: none;">
-      <h3>Wall of Shame</h3>
-      <div id="wallOfShameContent">
-        <!-- Debt information will be dynamically added here -->
-      </div>
-    </div>
-
-    <div id="debugArea" style="display: none; margin-top: 15px; padding: 10px;">
-      <h4>Debug Info</h4>
-      <div>
-        <label for="toggleDebugNextCard">Show Next Card: </label>
-        <input type="checkbox" id="toggleDebugNextCard" onchange="updateDebugNextCardDisplay()">
-      </div>
-      <div id="debugNextCard" style="margin-top: 5px; font-weight: bold; min-height: 20px;">
-        Next Card: (Hidden)
-      </div>
-    </div>
-
-  </div>
-
-<script>
+    </aside>
+  </main>
+  <!-- Scripts and game logic remain unchanged below -->
+  <script>
 // Game State Constants
 const PHASE_BETTING = 'betting';
 const PHASE_PLAYING = 'playing';
@@ -570,12 +793,16 @@ function startNewRound() {
     updateDebugNextCardDisplay();
 }
 
-// Theme handling
-function toggleTheme() {
-  const isDark = document.body.classList.toggle('dark');
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+const availableThemes = ["neon", "light", "dark-standard", "casino-green"];
+
+function applyTheme(themeName) {
+  if (!availableThemes.includes(themeName)) {
+    themeName = availableThemes[0]; // Default if invalid
+  }
+  document.body.dataset.theme = themeName;
+  localStorage.setItem('theme', themeName);
   updatePlayerArea();
-  updateDebugNextCardDisplay();
+  updateDebugNextCardDisplay(); // This will re-evaluate colors based on new theme's CSS vars
 
   // Reapply the highlight to the selected choice buttons
   Object.entries(players).forEach(([name, player]) => {
@@ -593,12 +820,14 @@ function toggleTheme() {
   });
 }
 
-(function loadTheme() {
-  const theme = localStorage.getItem('theme');
-  if (theme === 'dark') {
-    document.body.classList.add('dark');
+function loadTheme() {
+  let savedTheme = localStorage.getItem('theme');
+  if (!savedTheme || !availableThemes.includes(savedTheme)) {
+    savedTheme = availableThemes[0]; // Default to neon
   }
-})();
+  applyTheme(savedTheme);
+  document.getElementById('themeSelector').value = savedTheme;
+}
 
 // Load players from localStorage
 window.onload = () => {
@@ -630,22 +859,36 @@ function savePlayers() {
   updateDebugNextCardDisplay();
 }
 
-function addPlayer() {
-  const name = document.getElementById('playerName').value.trim();
-  const chips = parseInt(document.getElementById('playerChips').value);
+function handleAddPlayerOrLoan() {
+  const nameInput = document.getElementById('newPlayerNameInput');
+  const chipsInput = document.getElementById('newPlayerChipsInput');
+  const name = nameInput.value.trim();
+  const chips = parseInt(chipsInput.value);
 
-  if (name && !isNaN(chips) && chips >= 0) {
-    if (players[name]) {
-      players[name].chips += chips;
-      players[name].debt = (players[name].debt || 0) + chips;
-    } else {
-      players[name] = { chips, lastBet: 0, debt: 0, currentChoice: undefined, historicalBet: 0 };
-    }
-    updatePlayerArea();
-    savePlayers();
-  } else {
-    alert('Enter a valid name and chip amount.');
+  if (!name || isNaN(chips) || chips < 0) {
+    alert('Please enter a valid name and a non-negative chip amount.');
+    return;
   }
+
+  if (players[name]) {
+    // Existing player: Apply for loan
+    players[name].chips += chips;
+    players[name].debt = (players[name].debt || 0) + chips;
+    console.log(`Loan of ${chips} chips given to ${name}. New balance: ${players[name].chips}, New Debt: ${players[name].debt}`);
+  } else {
+    // New player
+    players[name] = { chips, lastBet: 0, debt: 0, currentChoice: undefined, historicalBet: 0 };
+    console.log(`New player ${name} added with ${chips} chips.`);
+  }
+
+  updatePlayerArea();
+  updateWallOfShame();
+  savePlayers();
+
+  // Clear inputs after action
+  nameInput.value = '';
+  chipsInput.value = '';
+  nameInput.dispatchEvent(new Event('input'));
 }
 
 function payDebt(playerName) {
@@ -706,7 +949,7 @@ function resetPlayers() {
 }
 
 function updatePlayerArea() {
-    const playerArea = document.getElementById('playerArea');
+    const playerArea = document.getElementById('playersPanel');
     playerArea.innerHTML = '';
 
     Object.entries(players).forEach(([name, player]) => {
@@ -715,7 +958,6 @@ function updatePlayerArea() {
     });
     updateGameButtons();
     updateWallOfShame(); 
-    createPlayerManagementRow();
     calculateAndApplyColumnWidths(); 
 }
 
@@ -723,32 +965,22 @@ function createPlayerControlsDiv(name, player) {
     const playerDiv = document.createElement('div');
     playerDiv.className = 'player-controls';
 
-    appendPlayerNameDiv(playerDiv, name);
-    appendPlayerChipsDiv(playerDiv, player);
-    appendBetControls(playerDiv, name, player);
-    appendChoiceAndCashOutButtons(playerDiv, name, player);
-
-    return playerDiv;
-}
-
-function appendPlayerNameDiv(parentDiv, name) {
+    // Header row: name (left), chips (right)
+    const headerRow = document.createElement('div');
+    headerRow.className = 'player-header-row';
     const nameDiv = document.createElement('div');
     nameDiv.className = 'player-name';
     nameDiv.textContent = name;
-    parentDiv.appendChild(nameDiv);
-}
-
-function appendPlayerChipsDiv(parentDiv, player) {
     const chipsDiv = document.createElement('div');
     chipsDiv.className = 'player-chips';
     chipsDiv.textContent = `Chips: ${player.chips}`;
-    parentDiv.appendChild(chipsDiv);
-}
+    headerRow.appendChild(nameDiv);
+    headerRow.appendChild(chipsDiv);
+    playerDiv.appendChild(headerRow);
 
-function appendBetControls(parentDiv, name, player) {
-    const betControlsContainer = document.createElement('div');
-    betControlsContainer.className = 'player-bet';
-
+    // Bet row: bet input, Use Last, Pay Debt (all inline)
+    const betRow = document.createElement('div');
+    betRow.className = 'player-bet-row';
     const betInputId = `betInput_${name}`;
     const betInput = document.createElement('input');
     betInput.type = 'number';
@@ -756,7 +988,6 @@ function appendBetControls(parentDiv, name, player) {
     betInput.value = player.lastBet;
     betInput.min = 0;
     betInput.max = player.chips > 0 ? player.chips : 0;
-
     betInput.onchange = () => {
         let newBet = parseInt(betInput.value) || 0;
         if (newBet < 0) newBet = 0;
@@ -767,21 +998,21 @@ function appendBetControls(parentDiv, name, player) {
         }
         player.lastBet = newBet;
         activePlayers = getActivePlayers();
-        updatePlayerArea(); 
+        updatePlayerArea();
         updateGameButtons();
     };
-    betInput.readOnly = gamePhase === PHASE_PLAYING || player.chips <= 0;
+    betInput.readOnly = gamePhase === PHASE_PLAYING || gamePhase === PHASE_GAME_OVER || player.chips <= 0;
     if (player.chips <= 0 && gamePhase !== PHASE_PLAYING) {
         player.lastBet = 0;
         betInput.value = 0;
     }
-    betControlsContainer.appendChild(betInput);
+    betRow.appendChild(betInput);
 
-    if ((gamePhase === PHASE_BETTING || gamePhase === PHASE_GAME_OVER) && player.historicalBet > 0 && player.chips >= player.historicalBet) {
+    // Only show "Use Last Bet" button during the betting phase
+    if (gamePhase === PHASE_BETTING && player.historicalBet > 0 && player.chips >= player.historicalBet) {
         const useLastBetButton = document.createElement('button');
         useLastBetButton.textContent = `Use Last (${player.historicalBet})`;
         useLastBetButton.className = 'use-last-bet-button';
-        useLastBetButton.style.marginLeft = '5px';
         useLastBetButton.onclick = () => {
             const betInputElement = document.getElementById(betInputId);
             if (betInputElement) {
@@ -793,120 +1024,109 @@ function appendBetControls(parentDiv, name, player) {
                 }
             }
         };
-        betControlsContainer.appendChild(useLastBetButton);
+        betRow.appendChild(useLastBetButton);
     }
 
     if (player.debt > 0 && player.chips > 0) {
         const payDebtButton = document.createElement('button');
         payDebtButton.textContent = 'Pay Debt';
-        payDebtButton.className = 'choice-button'; 
-        payDebtButton.style.marginLeft = '10px'; 
+        payDebtButton.className = 'choice-button';
         payDebtButton.onclick = () => payDebt(name);
-        betControlsContainer.appendChild(payDebtButton);
+        betRow.appendChild(payDebtButton);
     }
-    parentDiv.appendChild(betControlsContainer);
-}
+    playerDiv.appendChild(betRow);
 
-function appendChoiceAndCashOutButtons(parentDiv, name, player) {
-    if (!activePlayers.has(name) || player.lastBet <= 0) return; // Don't show if no bet or not active
+    // Action row: choice/cash-out buttons (inline, wrap if needed)
+    if (activePlayers.has(name) && player.lastBet > 0) {
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'choice-buttons';
+        let choices = [];
+        let createActiveChoiceButtons = false;
 
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.className = 'choice-buttons';
-    let choices = [];
-    let createActiveChoiceButtons = false;
-
-    if (gamePhase === PHASE_BETTING) {
-        choices = [CHOICE_RED, CHOICE_BLACK];
-        createActiveChoiceButtons = true;
-    } else if (gamePhase === PHASE_PLAYING) {
-        createActiveChoiceButtons = true;
-        switch (currentRound) {
-            case 1: choices = [CHOICE_RED, CHOICE_BLACK]; break;
-            case 2: choices = [CHOICE_HIGHER, CHOICE_LOWER]; break;
-            case 3: choices = [CHOICE_INSIDE, CHOICE_OUTSIDE]; break;
-            case 4: choices = [SUIT_SPADES, SUIT_HEARTS, SUIT_DIAMONDS, SUIT_CLUBS]; break;
-            case 5: choices = []; /* Special handling for R5 below */ break;
-        }
-
-        // Cash Out button first (if applicable)
-        if (currentRound > 1 && currentRound <= 5) { // Cash out available up to start of R5
-            const cashOutButton = document.createElement('button');
-            cashOutButton.className = 'cash-out-button';
-            const multiplierRoundForCashOut = (currentRound === 5) ? 4 : currentRound - 1;
-            const cashOutMultiplier = roundMultipliers[multiplierRoundForCashOut];
-            if (cashOutMultiplier !== undefined && player.lastBet > 0) {
-                cashOutButton.textContent = `Cash Out (${cashOutMultiplier}x = ${player.lastBet * cashOutMultiplier} chips)`;
-            } else {
-                cashOutButton.textContent = 'Cash Out (N/A)';
+        if (gamePhase === PHASE_BETTING) {
+            choices = [CHOICE_RED, CHOICE_BLACK];
+            createActiveChoiceButtons = true;
+        } else if (gamePhase === PHASE_PLAYING) {
+            createActiveChoiceButtons = true;
+            switch (currentRound) {
+                case 1: choices = [CHOICE_RED, CHOICE_BLACK]; break;
+                case 2: choices = [CHOICE_HIGHER, CHOICE_LOWER]; break;
+                case 3: choices = [CHOICE_INSIDE, CHOICE_OUTSIDE]; break;
+                case 4: choices = [SUIT_SPADES, SUIT_HEARTS, SUIT_DIAMONDS, SUIT_CLUBS]; break;
+                case 5: choices = []; break;
             }
-            cashOutButton.onclick = () => handleCashOut(name);
-            buttonsContainer.appendChild(cashOutButton);
-        }
-
-        // Round 5: Special Input - Dropdown for card value
-        if (currentRound === 5) {
-            const valueSelect = document.createElement('select');
-            valueSelect.id = `r5_value_select_${name}`;
-            valueSelect.className = 'choice-button'; // For styling consistency
-
-            // Add a placeholder option
-            const placeholderOption = document.createElement('option');
-            placeholderOption.value = ""; // Empty value for placeholder
-            placeholderOption.textContent = "Guess Value...";
-            placeholderOption.selected = true;
-            placeholderOption.disabled = true;
-            valueSelect.appendChild(placeholderOption);
-
-            CARD_VALUES_WITH_ACE_HIGH.forEach(val => {
-                const option = document.createElement('option');
-                option.value = val;
-                option.textContent = val;
-                valueSelect.appendChild(option);
-            });
-            
-            // Set current choice if exists, otherwise placeholder remains selected
-            if (player.currentChoice) {
-                valueSelect.value = player.currentChoice;
-            }
-
-            valueSelect.onchange = function() {
-                const selectedValue = this.value;
-                if (selectedValue) { // Ensure a real value is selected, not the placeholder
-                    makeChoice(name, selectedValue);
+            // Cash Out button first (if applicable)
+            if (currentRound > 1 && currentRound <= 5) {
+                const cashOutButton = document.createElement('button');
+                cashOutButton.className = 'cash-out-button';
+                const multiplierRoundForCashOut = (currentRound === 5) ? 4 : currentRound - 1;
+                const cashOutMultiplier = roundMultipliers[multiplierRoundForCashOut];
+                if (cashOutMultiplier !== undefined && player.lastBet > 0) {
+                    cashOutButton.textContent = `Cash Out (${cashOutMultiplier}x = ${player.lastBet * cashOutMultiplier} chips)`;
+                } else {
+                    cashOutButton.textContent = 'Cash Out (N/A)';
                 }
-            };
-            buttonsContainer.appendChild(valueSelect);
+                cashOutButton.onclick = () => handleCashOut(name);
+                buttonsContainer.appendChild(cashOutButton);
+            }
+            // Round 5: Special Input - Dropdown for card value
+            if (currentRound === 5) {
+                const valueSelect = document.createElement('select');
+                valueSelect.id = `r5_value_select_${name}`;
+                valueSelect.className = 'choice-button';
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = "";
+                placeholderOption.textContent = "Guess Value...";
+                placeholderOption.selected = true;
+                placeholderOption.disabled = true;
+                valueSelect.appendChild(placeholderOption);
+                CARD_VALUES_WITH_ACE_HIGH.forEach(val => {
+                    const option = document.createElement('option');
+                    option.value = val;
+                    option.textContent = val;
+                    valueSelect.appendChild(option);
+                });
+                if (player.currentChoice) {
+                    valueSelect.value = player.currentChoice;
+                }
+                valueSelect.onchange = function() {
+                    const selectedValue = this.value;
+                    if (selectedValue) {
+                        makeChoice(name, selectedValue);
+                    }
+                };
+                buttonsContainer.appendChild(valueSelect);
+            }
+        }
+        // Standard choice buttons for rounds 1-4
+        if (choices.length > 0 && currentRound < 5) {
+            choices.forEach(choiceText => {
+                const button = document.createElement('button');
+                button.className = 'choice-button';
+                button.textContent = choiceText.charAt(0).toUpperCase() + choiceText.slice(1);
+                if (createActiveChoiceButtons) {
+                    button.onclick = () => makeChoice(name, choiceText);
+                    button.disabled = false;
+                } else {
+                    button.disabled = true;
+                }
+                if (player.currentChoice && choiceText.toLowerCase() === player.currentChoice.toLowerCase()) {
+                    button.classList.add('selected');
+                }
+                buttonsContainer.appendChild(button);
+            });
+        }
+        if (buttonsContainer.hasChildNodes()) {
+            playerDiv.appendChild(buttonsContainer);
         }
     }
-
-    // Standard choice buttons for rounds 1-4
-    if (choices.length > 0 && currentRound < 5) { // Only for rounds 1-4
-        choices.forEach(choiceText => {
-            const button = document.createElement('button');
-            button.className = 'choice-button';
-            button.textContent = choiceText.charAt(0).toUpperCase() + choiceText.slice(1);
-            if (createActiveChoiceButtons) {
-                button.onclick = () => makeChoice(name, choiceText);
-                button.disabled = false;
-            } else {
-                button.disabled = true;
-            }
-            if (player.currentChoice && choiceText.toLowerCase() === player.currentChoice.toLowerCase()) {
-                button.classList.add('selected');
-            }
-            buttonsContainer.appendChild(button);
-        });
-    }
-
-    if (buttonsContainer.hasChildNodes()) {
-        parentDiv.appendChild(buttonsContainer);
-    }
+    return playerDiv;
 }
 
 function calculateAndApplyColumnWidths() {
     const columnClasses = ['.player-name', '.player-chips', '.player-bet', '.choice-buttons'];
     // Ensure we only select elements within player rows, not the management row if it uses similar classes by mistake
-    const playerRows = document.querySelectorAll('#playerArea .player-controls:not(.management-row)');
+    const playerRows = document.querySelectorAll('#playersPanel .player-controls:not(.management-row)');
 
     if (playerRows.length === 0) return; // No player rows to process
 
@@ -946,127 +1166,6 @@ function calculateAndApplyColumnWidths() {
     });
 }
 
-function createPlayerManagementRow() {
-    const playerArea = document.getElementById('playerArea');
-    const controlRow = document.createElement('div');
-    // controlRow.className = 'player-controls management-row'; // Remove to avoid 4-column grid
-    controlRow.className = 'management-row'; // Just for potential specific styling, not grid
-    controlRow.style.display = 'flex';
-    controlRow.style.gap = '10px';
-    controlRow.style.alignItems = 'center';
-    controlRow.style.marginTop = '20px'; // A bit more spacing for this distinct row
-    controlRow.style.padding = '10px';
-    controlRow.style.border = '1px solid #444'; // Visually group them
-    controlRow.style.borderRadius = '5px';
-
-    // Name Input Cell
-    const nameCell = document.createElement('div');
-    nameCell.style.flexBasis = '40%'; // Approx percentage
-    const nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.id = 'newPlayerNameInput';
-    nameInput.setAttribute('list', 'playerDatalist');
-    nameInput.placeholder = 'New Player Name';
-    nameInput.style.width = '100%'; 
-    nameInput.style.height = '40px'; 
-    nameInput.style.boxSizing = 'border-box';
-    nameCell.appendChild(nameInput);
-    const dataList = document.createElement('datalist');
-    dataList.id = 'playerDatalist';
-    Object.keys(players).forEach(playerName => {
-        const option = document.createElement('option');
-        option.value = playerName;
-        dataList.appendChild(option);
-    });
-    nameCell.appendChild(dataList); 
-    controlRow.appendChild(nameCell);
-
-    // Chips Input Cell
-    const chipsCell = document.createElement('div');
-    chipsCell.style.flexBasis = '25%'; // Approx percentage
-    const chipsInput = document.createElement('input');
-    chipsInput.type = 'number';
-    chipsInput.id = 'newPlayerChipsInput';
-    chipsInput.placeholder = 'Starting Chips';
-    chipsInput.min = 0;
-    chipsInput.style.width = '100%'; 
-    chipsInput.style.height = '40px';
-    chipsInput.style.boxSizing = 'border-box';
-    chipsCell.appendChild(chipsInput);
-    controlRow.appendChild(chipsCell);
-
-    // Action Button Cell
-    const buttonCell = document.createElement('div');
-    buttonCell.style.flexGrow = '1'; // Let it take remaining space or a fixed basis
-    buttonCell.style.flexBasis = '30%'; // Approx percentage
-    const actionButton = document.createElement('button');
-    actionButton.id = 'newAddPlayerButton';
-    actionButton.textContent = 'Add Player';
-    actionButton.style.width = '100%'; 
-    actionButton.style.height = '40px'; 
-    actionButton.style.boxSizing = 'border-box';
-    buttonCell.appendChild(actionButton);
-    controlRow.appendChild(buttonCell);
-
-    // Event listener for name input 
-    nameInput.addEventListener('input', () => {
-        const enteredName = nameInput.value.trim();
-        if (players[enteredName]) {
-            chipsInput.placeholder = 'Loaning Chips';
-            actionButton.textContent = 'Apply for Financial Assistance';
-        } else {
-            chipsInput.placeholder = 'Starting Chips';
-            actionButton.textContent = 'Add Player';
-        }
-    });
-
-    // Action button click handler
-    actionButton.onclick = handleAddPlayerOrLoan;
-
-    // Enable/Disable controls based on game phase
-    const UIElementsToToggle = [nameInput, chipsInput, actionButton];
-    if (gamePhase === PHASE_PLAYING) {
-        UIElementsToToggle.forEach(el => el.disabled = true);
-    } else {
-        UIElementsToToggle.forEach(el => el.disabled = false);
-    }
-
-    playerArea.appendChild(controlRow);
-}
-
-function handleAddPlayerOrLoan() {
-    const nameInput = document.getElementById('newPlayerNameInput');
-    const chipsInput = document.getElementById('newPlayerChipsInput');
-    const name = nameInput.value.trim();
-    const chips = parseInt(chipsInput.value);
-
-    if (!name || isNaN(chips) || chips < 0) {
-        alert('Please enter a valid name and a non-negative chip amount.');
-        return;
-    }
-
-    if (players[name]) {
-        // Existing player: Apply for loan
-        players[name].chips += chips;
-        players[name].debt = (players[name].debt || 0) + chips;
-        console.log(`Loan of ${chips} chips given to ${name}. New balance: ${players[name].chips}, New Debt: ${players[name].debt}`);
-    } else {
-        // New player
-        players[name] = { chips, lastBet: 0, debt: 0, currentChoice: undefined, historicalBet: 0 };
-        console.log(`New player ${name} added with ${chips} chips.`);
-    }
-
-    updatePlayerArea(); // This will re-render everything including the management row and player list
-    updateWallOfShame();
-    savePlayers();
-
-    // Clear inputs after action
-    nameInput.value = '';
-    chipsInput.value = '';
-    // Trigger input event to reset placeholders and button text
-    nameInput.dispatchEvent(new Event('input')); 
-}
-
 function makeChoice(playerName, choice) {
     const player = players[playerName];
     if (player.lastBet <= 0) {
@@ -1079,6 +1178,7 @@ function makeChoice(playerName, choice) {
     // updatePlayerArea will handle visual updates including selection and disabling buttons
     updatePlayerArea(); 
     updateGameButtons(); // Update main game button states (e.g., enable Draw Card if all choices made)
+    updateRoundInfo(); // Add this call to refresh round information and player count
 
     console.log('Game State after choice:', {
         currentRound,
@@ -1098,8 +1198,11 @@ function makeChoice(playerName, choice) {
     });
 }
 
-function drawCard() {
-    updateDeckDisplay();
+async function drawCard() { // Made async to handle animation timing if needed, though not strictly with this approach yet
+    const deckElement = document.getElementById('deck');
+    const gameBoardPanel = document.getElementById('gameBoardPanel');
+    if (!deckElement || !gameBoardPanel) return;
+
     console.log('[DrawCard] Called. State before draw:', {
         gamePhase,
         gameInProgress,
@@ -1148,17 +1251,69 @@ function drawCard() {
         updateDebugNextCardDisplay();
         console.log('[DrawCard] Game started.');
     }
-    if (!allActivePlayersMadeChoices() || deck.length === 0) {
+    if (!allActivePlayersMadeChoices(true) || deck.length === 0) { // Pass true to check for playing phase
         console.log('[DrawCard] Early return: Not all choices made or deck is empty.', {
-            allChoicesMade: allActivePlayersMadeChoices(),
+            allChoicesMade: allActivePlayersMadeChoices(true),
             deckLength: deck.length
         });
         return;
     }
     const card = deck.pop();
-    drawnCards.push(card);
+    if (!card) return; // Should not happen if deck.length check passed
+
+    // 1. Create and position the ghost card
+    const ghostCard = document.createElement('div');
+    ghostCard.style.position = 'absolute';
+    ghostCard.style.width = deckElement.offsetWidth + 'px'; // Start with deck size
+    ghostCard.style.height = deckElement.offsetHeight + 'px';
+    ghostCard.style.background = getComputedStyle(deckElement).background;
+    ghostCard.style.borderRadius = getComputedStyle(deckElement).borderRadius;
+    ghostCard.style.border = getComputedStyle(deckElement).border;
+    ghostCard.style.boxShadow = getComputedStyle(deckElement).boxShadow;
+    ghostCard.style.display = 'flex';
+    ghostCard.style.alignItems = 'center';
+    ghostCard.style.justifyContent = 'center';
+    ghostCard.style.zIndex = '1000';
+    ghostCard.style.transition = 'transform 0.5s ease-in-out, opacity 0.4s ease-in-out, width 0.5s ease-in-out, height 0.5s ease-in-out';
+
+    const deckRect = deckElement.getBoundingClientRect();
+    const boardRect = gameBoardPanel.getBoundingClientRect();
+    ghostCard.style.left = (deckRect.left - boardRect.left) + 'px';
+    ghostCard.style.top = (deckRect.top - boardRect.top) + 'px';
+    gameBoardPanel.appendChild(ghostCard);
+
+    // 2. Add actual card to array and update display (with last card initially invisible)
+    drawnCards.push(card); 
+    updateDrawnCardsDisplay(true); // True indicates to mark the last card for animation target
     console.log('[DrawCard] Drew card:', card, 'Drawn cards:', drawnCards.map(c => c.value + c.suit));
-    updateDrawnCardsDisplay();
+
+    // 3. Get target position (the actual, now invisible, new card)
+    const drawnCardsContainer = document.getElementById('drawnCards');
+    const actualCardElement = drawnCardsContainer.lastElementChild;
+
+    if (actualCardElement) {
+        const targetRect = actualCardElement.getBoundingClientRect();
+
+        // 4. Animate ghost card
+        requestAnimationFrame(() => { // Ensure styles are applied before transition starts
+            ghostCard.style.transform = `translate(${(targetRect.left - deckRect.left)}px, ${(targetRect.top - deckRect.top)}px) scale(1)`;
+            // Match final card size during animation
+            ghostCard.style.width = targetRect.width + 'px'; 
+            ghostCard.style.height = targetRect.height + 'px';
+            // ghostCard.style.opacity = '0'; // Fade out as it arrives
+
+            ghostCard.addEventListener('transitionend', () => {
+                if (ghostCard.parentNode) {
+                    ghostCard.parentNode.removeChild(ghostCard);
+                }
+                actualCardElement.classList.remove('drawn-card-target'); // Make actual card visible
+            }, { once: true });
+        });
+    } else {
+        // Fallback if target element not found, remove ghost immediately
+        if (ghostCard.parentNode) ghostCard.parentNode.removeChild(ghostCard);
+    }
+
     updateDeckDisplay();
     processRoundResults(card);
     updatePlayerArea();
@@ -1181,15 +1336,20 @@ function drawCard() {
     });
 }
 
-function updateDrawnCardsDisplay() {
+function updateDrawnCardsDisplay(animateLastCard = false) {
   const container = document.getElementById('drawnCards');
   container.innerHTML = '';
   
-  drawnCards.forEach(card => {
+  drawnCards.forEach((card, index) => {
     const cardElement = document.createElement('div');
     cardElement.className = 'card';
     cardElement.style.color = ['♥', '♦'].includes(card.suit) ? 'red' : 'black';
     cardElement.textContent = `${card.value}${card.suit}`;
+
+    if (animateLastCard && index === drawnCards.length - 1) {
+      cardElement.classList.add('drawn-card-target');
+    }
+
     container.appendChild(cardElement);
   });
 }
@@ -1325,15 +1485,14 @@ function updateRoundInfo() {
             multiplierInfo.textContent = 'Deck will be reshuffled on New Game.';
         }
     } else if (gamePhase === PHASE_BETTING) {
-        initializeDeck();
         const currentActivePlayers = getActivePlayers();
         if (currentActivePlayers.size === 0) {
             roundInfo.textContent = 'Betting Phase: Place your bets!';
-            multiplierInfo.textContent = 'Then click \'New Game\' if you are ready (it will appear).'; // Or guide to New Game if that's the flow.
+            multiplierInfo.textContent = 'Deck will be reshuffled on New Game.';
         } else {
             const playersNeedingChoice = Array.from(currentActivePlayers).filter(name => !players[name].currentChoice).length;
             if (playersNeedingChoice > 0) {
-                roundInfo.textContent = 'Betting Phase: Make your choices!';
+                roundInfo.textContent = 'Round 1: Guess if the card is Red or Black';
                 multiplierInfo.textContent = `Waiting for ${playersNeedingChoice} player(s) to choose.`;
             } else {
                 roundInfo.textContent = 'Ready to Play!';
@@ -1491,7 +1650,7 @@ function updateDeckDisplay() {
     
     if (deckDiv) {
       // Update the CSS variable
-      deckDiv.style.setProperty('--deck-content', `"${deck.length > 0 ? deck.length : 'Empty'}"`);    
+      deckDiv.setAttribute('data-count', deck.length > 0 ? deck.length : 'Empty');
     }
 }
 
@@ -1589,29 +1748,28 @@ function updateGameButtons() {
     const drawCardButton = document.getElementById('drawCardButton');
     if (!newGameButton || !drawCardButton) return;
 
-    const currentActivePlayers = getActivePlayers(); // Get current players with bets
-    const allChoicesMadeForBetting = Array.from(currentActivePlayers).every(name => players[name].currentChoice !== undefined && players[name].lastBet > 0);
-    const allChoicesMadeForPlaying = Array.from(activePlayers).every(name => players[name].currentChoice !== undefined); // activePlayers is specific to current game
+    // Ensure they have the shared class for styling if New Game button was moved
+    // and might not have it from original HTML location.
+    newGameButton.className = 'draw-button'; 
 
-    console.log('[updateGameButtons] gamePhase:', gamePhase, 'currentActivePlayers:', Array.from(currentActivePlayers), 'allChoicesMadeForBetting:', allChoicesMadeForBetting, 'allChoicesMadeForPlaying:', allChoicesMadeForPlaying);
+    const currentActivePlayers = getActivePlayers();
+    const allChoicesMadeForBetting = Array.from(currentActivePlayers).every(name => players[name].currentChoice !== undefined && players[name].lastBet > 0);
+    const allChoicesMadeForPlaying = Array.from(activePlayers).every(name => players[name].currentChoice !== undefined);
 
     if (gamePhase === PHASE_GAME_OVER) {
         newGameButton.style.display = '';
         drawCardButton.style.display = 'none';
         newGameButton.disabled = false;
-        console.log('[updateGameButtons] gameOver phase: Showing New Game button.');
     } else if (gamePhase === PHASE_BETTING) {
+        // In betting phase, always show Draw Card, hide New Game.
+        // Draw Card is disabled until all players with bets have made choices.
         newGameButton.style.display = 'none';
         drawCardButton.style.display = '';
-        // Enable Draw Card only if there are players with bets AND all of them have made choices for Round 1.
         drawCardButton.disabled = !(currentActivePlayers.size > 0 && allChoicesMadeForBetting);
-        console.log('[updateGameButtons] Betting phase: Draw Card button visible. Enabled:', !drawCardButton.disabled);
     } else if (gamePhase === PHASE_PLAYING) {
         newGameButton.style.display = 'none';
         drawCardButton.style.display = '';
-        // Enable Draw Card if all *currently in-game* active players have made their choices for the current round.
         drawCardButton.disabled = !(activePlayers.size > 0 && allChoicesMadeForPlaying);
-        console.log('[updateGameButtons] Playing phase: Draw Card button visible. Enabled:', !drawCardButton.disabled);
     }
 }
 
@@ -1636,6 +1794,105 @@ function updateDebugNextCardDisplay() {
         debugNextCardDiv.style.color =  theme === 'dark' ? 'white' : 'black';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Setup button event listeners
+  const newGameBtn = document.getElementById('newGameButton');
+  if (newGameBtn) newGameBtn.onclick = startNewGame;
+
+  const resetBtn = document.getElementById('resetPlayersButton');
+  if (resetBtn) resetBtn.onclick = resetPlayers;
+
+  const themeSelectorElement = document.getElementById('themeSelector');
+  if (themeSelectorElement) themeSelectorElement.onchange = (event) => applyTheme(event.target.value);
+
+  const drawCardBtn = document.getElementById('drawCardButton');
+  if (drawCardBtn) drawCardBtn.onclick = drawCard;
+
+  // Existing DOMContentLoaded logic for add player form (if any, or integrate if separate)
+  const nameInput = document.getElementById('newPlayerNameInput');
+  const chipsInput = document.getElementById('newPlayerChipsInput');
+  const actionButton = document.getElementById('newAddPlayerButton');
+  const dataList = document.getElementById('playerDatalist');
+
+  // Populate datalist with player names
+  function updateDatalist() {
+    if (!dataList) return; // Guard if datalist is not present
+    dataList.innerHTML = '';
+    Object.keys(players).forEach(playerName => {
+      const option = document.createElement('option');
+      option.value = playerName;
+      dataList.appendChild(option);
+    });
+  }
+  
+  if (nameInput && chipsInput && actionButton && dataList) {
+    updateDatalist(); // Initial population
+
+    nameInput.addEventListener('input', () => {
+      const enteredName = nameInput.value.trim();
+      if (players[enteredName]) {
+        chipsInput.placeholder = 'Loaning Chips';
+        actionButton.textContent = '$ Apply for Financial Assistance';
+      } else {
+        chipsInput.placeholder = 'Starting Chips';
+        actionButton.textContent = '+ Add Player';
+      }
+    });
+
+    // Also update datalist when players change - this might need to be adapted
+    // if savePlayers itself is not available globally or needs specific context.
+    // For now, assuming savePlayers will trigger necessary updates.
+    // To be absolutely sure datalist updates, it might be better to call
+    // updateDatalist() from within handleAddPlayerOrLoan or similar functions
+    // that modify the players object.
+    // However, the existing pattern is to hook into savePlayers.
+    // To be absolutely sure datalist updates, it might be better to call
+    // updateDatalist() from within handleAddPlayerOrLoan or similar functions
+    // that modify the players object.
+    // However, the existing pattern is to hook into savePlayers.
+    if (typeof origSavePlayers !== 'undefined') {
+        const currentSavePlayers = window.savePlayers;
+        window.savePlayers = function() {
+            currentSavePlayers.apply(this, arguments); // Call the potentially overridden savePlayers
+            updateDatalist(); // Then update our datalist
+        };
+    } else { // Fallback if origSavePlayers wasn't captured (e.g. script order)
+        const currentSavePlayers = window.savePlayers;
+        window.savePlayers = function() {
+            currentSavePlayers.apply(this, arguments);
+            updateDatalist();
+        };
+    }
+  }
+  
+  // Initial UI updates that depend on DOM ready
+  updateRoundInfo();
+  updatePlayerArea(); // This will also call updateGameButtons
+  updateDeckDisplay();
+  updateDebugNextCardDisplay();
+  document.getElementById('debugArea').style.display = 'block'; // Assuming debug area should be visible by default now
+  
+  // The window.onload function might be redundant or could be merged here if all it does is DOM manipulation and init calls.
+  // For now, let's ensure the original onload logic is still respected or moved.
+  // The original onload was:
+  /*
+  window.onload = () => {
+    loadGameState(); // This should ideally happen before DOM content specific listeners if they rely on game state
+    updateRoundInfo();
+    updatePlayerArea();
+    updateGameButtons(); // updatePlayerArea calls this
+    updateDeckDisplay();
+    document.getElementById('debugArea').style.display = 'block';
+  };
+  */
+  // It's generally better to have one clear entry point.
+  // loadGameState() should happen early.
+  loadGameState(); // Load state first
+  // Then update UI based on loaded state and DOM readiness.
+  // The calls at the end of this DOMContentLoaded listener should cover the UI updates.
+
+});
 
 </script>
 </body>

@@ -997,9 +997,10 @@ function createPlayerControlsDiv(name, player) {
             alert("Bet cannot exceed current chips. Bet adjusted.");
         }
         player.lastBet = newBet;
-        activePlayers = getActivePlayers();
-        updatePlayerArea();
-        updateGameButtons();
+        activePlayers = getActivePlayers(); // Update global activePlayers set
+        updatePlayerArea();   // Redraws player card, should show choice buttons now
+        updateGameButtons();  // Updates Draw Card button state (still disabled if no choice yet)
+        updateRoundInfo();    // ADDED: Update instruction text like "Round 1: Guess..."
     };
     betInput.readOnly = gamePhase === PHASE_PLAYING || gamePhase === PHASE_GAME_OVER || player.chips <= 0;
     if (player.chips <= 0 && gamePhase !== PHASE_PLAYING) {
@@ -1477,7 +1478,7 @@ function updateRoundInfo() {
     const multiplierInfo = document.getElementById('roundMultiplier');
 
     if (gamePhase === PHASE_GAME_OVER) {
-        roundInfo.textContent = 'Game Over. Place bets and click \'New Game\' to play again.';
+        roundInfo.textContent = 'Game Over.\n Click \'New Game\' to play again.';
         const anyHistoricalBets = Object.values(players).some(p => p.historicalBet > 0);
         if (anyHistoricalBets) {
             multiplierInfo.textContent = 'You can use \'Use Last Bet\' to repeat previous bets.';

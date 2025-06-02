@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ride the Bus - Card Game</title>
+  <script>
+    (function() {
+      const knownThemes = ["neon", "light", "dark-standard", "casino-green"]; // Must match availableThemes in classic-mode.js
+      let savedTheme = localStorage.getItem('theme');
+      if (savedTheme && knownThemes.includes(savedTheme)) {
+        document.documentElement.dataset.theme = savedTheme;
+      } else {
+        // Optional: set a default theme if nothing valid is found or rely on :root defaults
+        // document.documentElement.dataset.theme = "neon"; 
+      }
+    })();
+  </script>
   <style>
     :root {
       --ncc-bg: #10101a;
@@ -659,1242 +671,225 @@
         padding: 0.5rem 0.3rem 0.6rem 0.3rem;
       }
     }
+
+    /* Notification Styles */
+    #gameNotification {
+      position: fixed; /* Or absolute if gameViewContainer is the positioning context */
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--ncc-panel);
+      color: var(--ncc-text);
+      padding: 1rem 1.5rem;
+      border-radius: var(--ncc-radius);
+      border: 1px solid var(--ncc-border);
+      box-shadow: var(--ncc-shadow);
+      z-index: 1000; /* Ensure it's on top */
+      display: none; /* Initially hidden */
+      min-width: 250px;
+      max-width: 500px;
+      text-align: center;
+      transition: top 0.3s ease-out, opacity 0.3s ease-out;
+    }
+    #gameNotification.show {
+      display: block;
+      opacity: 1;
+      top: 70px; /* Slide down to visible position */
+    }
+    #gameNotification.hide {
+      opacity: 0;
+      top: 20px; /* Slide back up */
+    }
+    #gameNotification .message {
+      margin-bottom: 0.5rem;
+    }
+    #gameNotification .close-btn {
+      background: none;
+      border: 1px solid var(--ncc-text2);
+      color: var(--ncc-text2);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      line-height: 20px;
+      text-align: center;
+      cursor: pointer;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 14px;
+    }
+    #gameNotification .close-btn:hover {
+      background-color: var(--ncc-card);
+      color: var(--ncc-text);
+    }
+    /* Type-specific styles */
+    #gameNotification.success {
+      background-color: var(--ncc-accent3); /* Greenish */
+      color: var(--ncc-bg); /* Dark text on light green */
+      border-color: var(--ncc-accent3);
+    }
+    #gameNotification.success .close-btn {
+      border-color: var(--ncc-bg);
+      color: var(--ncc-bg);
+    }
+    #gameNotification.error {
+      background-color: var(--ncc-error); /* Reddish */
+      color: white;
+      border-color: var(--ncc-error);
+    }
+    #gameNotification.error .close-btn {
+      border-color: white;
+      color: white;
+    }
+    #gameNotification.warning {
+      background-color: #ffc107; /* Bootstrap warning yellow */
+      color: #333;
+      border-color: #ffc107;
+    }
+    #gameNotification.warning .close-btn {
+      border-color: #333;
+      color: #333;
+    }
+    /* End Notification Styles */
+
+    /* Main Menu Styles */
+    #mainMenuContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh; /* Take full viewport height */
+      padding: 2rem;
+      text-align: center;
+      background: var(--ncc-bg); /* Use theme background */
+    }
+    .menu-title {
+      font-size: 3.5rem;
+      font-weight: bold;
+      color: var(--ncc-accent);
+      letter-spacing: 2px;
+      text-shadow: 0 0 12px var(--ncc-accent), 0 0 20px var(--ncc-accent2);
+      margin-bottom: 3rem;
+    }
+    .menu-options {
+      display: flex;
+      flex-direction: column; /* Stack buttons vertically */
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 400px; /* Limit width of button area */
+    }
+    .menu-button {
+      background: var(--ncc-panel);
+      color: var(--ncc-accent2);
+      border: 2px solid var(--ncc-accent2);
+      border-radius: var(--ncc-radius);
+      padding: 1rem 2rem;
+      font-size: 1.3rem;
+      font-family: var(--ncc-font);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: var(--ncc-shadow);
+    }
+    .menu-button:hover:not(:disabled) {
+      background: var(--ncc-accent2);
+      color: var(--ncc-bg);
+      border-color: var(--ncc-accent);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(var(--ncc-accent2-rgb, 0,0,0),0.3); /* Dynamic shadow based on accent2 */
+    }
+    .menu-button:disabled {
+      background: var(--ncc-card);
+      color: var(--ncc-text2);
+      border-color: var(--ncc-text2);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    /* End Main Menu Styles */
   </style>
 </head>
 <body>
-  <header>
-    <div class="game-title">Ride the Bus - Card Game</div>
-    <div class="header-controls">
-      <button id="resetPlayersButton">Reset</button>
-      <select id="themeSelector" class="header-theme-select">
-        <option value="neon" style="background-color: #10101a; color: #00fff7;">Neon Glow</option>
-        <option value="light" style="background-color: #f8f9fa; color: #212529;">Bright Day</option>
-        <option value="dark-standard" style="background-color: #212529; color: #f8f9fa;">Classic Dark</option>
-        <option value="casino-green" style="background-color: #1D7223; color: #FFD700;">Casino Night</option>
-      </select>
+  <div id="gameNotification">
+    <div class="message">Notification message here!</div>
+    <button class="close-btn" title="Close">&times;</button>
+  </div>
+
+  <div id="mainMenuContainer">
+    <h1 class="menu-title">Ride the Bus</h1>
+    <div class="menu-options">
+      <button id="playClassicButton" class="menu-button">Play Classic Mode</button>
+      <button id="playCampaignButton" class="menu-button">Play Campaign Mode (Soon)</button>
+      <button id="optionsButton" class="menu-button" disabled>Options (Soon)</button>
     </div>
-  </header>
-  <main>
-    <section class="panel players-panel" id="playersPanel">
-      <!-- Player cards will go here -->
-    </section>
-    <section class="panel game-board-panel" id="gameBoardPanel">
-      <div class="round-info" id="roundInfo">Round info here</div>
-      <div class="round-multiplier" id="roundMultiplier">Multiplier info here</div>
-      <div class="deck" id="deck" data-count="0"></div>
-      <div class="drawn-cards" id="drawnCards"></div>
-      <button class="draw-button" id="newGameButton" style="display:none;">New Game</button>
-      <button class="draw-button" id="drawCardButton" style="display:none">Draw Card</button>
-    </section>
-    <aside class="panel aux-panel" id="auxPanel">
-      <div class="aux-card" id="addPlayerCard">
-        <h3><span class="icon">➕</span>Add Player / Apply for Financial Assistance</h3>
-        <form class="add-player-form" onsubmit="event.preventDefault(); handleAddPlayerOrLoan();">
-          <input type="text" id="newPlayerNameInput" list="playerDatalist" placeholder="New Player Name" />
-          <datalist id="playerDatalist"></datalist>
-          <input type="number" id="newPlayerChipsInput" placeholder="Starting Chips" min="0" />
-          <button id="newAddPlayerButton" type="submit">Add Player</button>
-        </form>
+  </div>
+
+  <div id="gameViewContainer" style="display: none; min-height: 100vh;">
+    <header>
+      <div class="game-title">Ride the Bus - Card Game</div>
+      <div class="header-controls">
+        <button id="backToMenuButton">Back to Menu</button>
+        <button id="resetPlayersButton">Reset</button>
+        <select id="themeSelector" class="header-theme-select">
+          <option value="neon" style="background-color: #10101a; color: #00fff7;">Neon Glow</option>
+          <option value="light" style="background-color: #f8f9fa; color: #212529;">Bright Day</option>
+          <option value="dark-standard" style="background-color: #212529; color: #f8f9fa;">Classic Dark</option>
+          <option value="casino-green" style="background-color: #1D7223; color: #FFD700;">Casino Night</option>
+        </select>
       </div>
-      <div class="aux-card wall-of-shame" id="wallOfShameArea" style="display: none;">
-        <h3><span class="icon">⚡</span>Wall of Shame</h3>
-        <div id="wallOfShameContent"></div>
-      </div>
-      <div class="aux-card" id="debugArea" style="display: none; margin-top: 15px;">
-        <h4><span class="icon">🐞</span>Debug Info</h4>
-        <div>
-          <label for="toggleDebugNextCard">Show Next Card: </label>
-          <input type="checkbox" id="toggleDebugNextCard" onchange="updateDebugNextCardDisplay()">
+    </header>
+    <main>
+      <section class="panel players-panel" id="classicPlayersPanel">
+        <!-- Classic Player cards will go here -->
+      </section>
+      <section class="panel players-panel" id="campaignPlayersPanel" style="display: none;">
+        <!-- Campaign Player card will go here -->
+      </section>
+      <section class="panel game-board-panel" id="gameBoardPanel">
+        <div id="campaignStatusDisplay" style="display: none; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--ncc-card); border-radius: var(--ncc-radius); border: 1px solid var(--ncc-accent3); text-align: center; font-size: 1rem;">Campaign Status: Quota ... Capital ...</div>
+        <div class="round-info" id="roundInfo">Round info here</div>
+        <div class="round-multiplier" id="roundMultiplier">Multiplier info here</div>
+        <div class="deck" id="deck" data-count="0"></div>
+        <div class="drawn-cards" id="drawnCards"></div>
+        <div id="gameControls">
+          <button id="newGameButton">New Game (Classic)</button>
+          <button id="drawCardButton" class="draw-button">Draw Card</button>
+          <button id="completeQuotaButton" class="draw-button" style="display: none;">Complete Quota</button>
         </div>
-        <div id="debugNextCard" style="margin-top: 5px; font-weight: bold; min-height: 20px;">
-          Next Card: (Hidden)
+      </section>
+      <aside class="panel aux-panel" id="auxPanel">
+        <div class="aux-card" id="addPlayerCard">
+          <h3><span class="icon">➕</span>Add Player / Apply for Financial Assistance</h3>
+          <form class="add-player-form" onsubmit="event.preventDefault(); handleAddPlayerOrLoan();">
+            <input type="text" id="newPlayerNameInput" list="playerDatalist" placeholder="New Player Name" />
+            <datalist id="playerDatalist"></datalist>
+            <input type="number" id="newPlayerChipsInput" placeholder="Starting Chips" min="0" />
+            <button id="newAddPlayerButton" type="submit">Add Player</button>
+          </form>
         </div>
-      </div>
-    </aside>
-  </main>
-  <!-- Scripts and game logic remain unchanged below -->
-  <script>
-// Game State Constants
-const PHASE_BETTING = 'betting';
-const PHASE_PLAYING = 'playing';
-const PHASE_GAME_OVER = 'gameOver';
-
-const CHOICE_RED = 'red';
-const CHOICE_BLACK = 'black';
-const CHOICE_HIGHER = 'higher';
-const CHOICE_LOWER = 'lower';
-const CHOICE_INSIDE = 'inside';
-const CHOICE_OUTSIDE = 'outside';
-
-const SUIT_SPADES = '♠';
-const SUIT_HEARTS = '♥';
-const SUIT_DIAMONDS = '♦';
-const SUIT_CLUBS = '♣';
-
-const CARD_VALUES_WITH_ACE_HIGH = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-
-let players = {};
-let selectedPlayer = null;
-
-// Add these initializations
-let currentRound = 1;
-let gameInProgress = false;
-let activePlayers = new Set();
-let deck = [];
-let drawnCards = [];
-const roundMultipliers = {
-    1: 2,  // 2x for R1 cash out (not really a thing, but for consistency if game ended after R0)
-    2: 3,  // 3x for R2 cash out (based on R1 bet)
-    3: 4,  // 4x for R3 cash out (based on R2 bet)
-    4: 20, // 20x for R4 WIN or R5 cash out (based on R3 bet that won R4)
-    5: 50  // 50x for R5 WIN (exact card guess)
-};
-
-// Add at the top with other state variables:
-let gamePhase = PHASE_BETTING; // Initial phase
-
-// Initialize the deck
-function initializeDeck() {
-    const suits = ['♠', '♥', '♦', '♣'];
-    const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-    console.log("initializeDeck");
-    deck = [];
-    for (let suit of suits) {
-        for (let value of values) {
-            deck.push({ suit, value });
-        }
-    }
-    // Shuffle the deck
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    updateDeckDisplay();
-    updateDebugNextCardDisplay();
-}
-
-// Call initializeDeck when starting a new game
-function startNewRound() {
-    currentRound = 1;
-    drawnCards = [];
-    activePlayers = new Set(Object.keys(players).filter(playerName => players[playerName].chips > 0));
-    
-    // Reset eliminated status and bet commitment for all players
-    Object.keys(players).forEach(playerName => {
-        players[playerName].eliminated = false;
-        players[playerName].currentChoice = undefined;
-        players[playerName].lastBet = 0;
-    });
-    
-    updateRoundInfo();
-    updatePlayerArea();
-    updateGameButtons();
-    updateDeckDisplay();
-    updateDebugNextCardDisplay();
-}
-
-const availableThemes = ["neon", "light", "dark-standard", "casino-green"];
-
-function applyTheme(themeName) {
-  if (!availableThemes.includes(themeName)) {
-    themeName = availableThemes[0]; // Default if invalid
-  }
-  document.body.dataset.theme = themeName;
-  localStorage.setItem('theme', themeName);
-  updatePlayerArea();
-  updateDebugNextCardDisplay(); // This will re-evaluate colors based on new theme's CSS vars
-
-  // Reapply the highlight to the selected choice buttons
-  Object.entries(players).forEach(([name, player]) => {
-    if (player.currentChoice) {
-      const playerDiv = document.querySelector(`.player-controls input[value="${name}"]`).parentElement;
-      const choiceButtons = playerDiv.querySelectorAll('.choice-button');
-      choiceButtons.forEach(button => {
-        if (button.textContent.toLowerCase() === player.currentChoice) {
-          button.classList.add('selected');
-        } else {
-          button.classList.remove('selected');
-        }
-      });
-    }
-  });
-}
-
-function loadTheme() {
-  let savedTheme = localStorage.getItem('theme');
-  if (!savedTheme || !availableThemes.includes(savedTheme)) {
-    savedTheme = availableThemes[0]; // Default to neon
-  }
-  applyTheme(savedTheme);
-  document.getElementById('themeSelector').value = savedTheme;
-}
-
-// Load players from localStorage
-window.onload = () => {
-  const saved = localStorage.getItem('chipCounterPlayers');
-  if (saved) {
-    players = JSON.parse(saved);
-    // Initialize active players set with players who have bets
-    activePlayers = new Set(Object.keys(players).filter(playerName => players[playerName].chips > 0));
-    // Initialize game state if needed
-    if (shouldGameBeInProgress()) {
-        gameInProgress = true;
-        if (!deck || deck.length === 0) {
-            initializeDeck();
-        }
-    }
-        
-    updatePlayerArea();
-  }
-
-  updateRoundInfo();
-  updateGameButtons();
-  updateDeckDisplay();
-  updateDebugNextCardDisplay();
-};
-
-function savePlayers() {
-  localStorage.setItem('chipCounterPlayers', JSON.stringify(players));
-  updateDeckDisplay();
-  updateDebugNextCardDisplay();
-}
-
-function handleAddPlayerOrLoan() {
-  const nameInput = document.getElementById('newPlayerNameInput');
-  const chipsInput = document.getElementById('newPlayerChipsInput');
-  const name = nameInput.value.trim();
-  const chips = parseInt(chipsInput.value);
-
-  if (!name || isNaN(chips) || chips < 0) {
-    alert('Please enter a valid name and a non-negative chip amount.');
-    return;
-  }
-
-  if (players[name]) {
-    // Existing player: Apply for loan
-    players[name].chips += chips;
-    players[name].debt = (players[name].debt || 0) + chips;
-    console.log(`Loan of ${chips} chips given to ${name}. New balance: ${players[name].chips}, New Debt: ${players[name].debt}`);
-  } else {
-    // New player
-    players[name] = { chips, lastBet: 0, debt: 0, currentChoice: undefined, historicalBet: 0 };
-    console.log(`New player ${name} added with ${chips} chips.`);
-  }
-
-  updatePlayerArea();
-  updateWallOfShame();
-  savePlayers();
-
-  // Clear inputs after action
-  nameInput.value = '';
-  chipsInput.value = '';
-  nameInput.dispatchEvent(new Event('input'));
-}
-
-function payDebt(playerName) {
-  const targetPlayerName = playerName || selectedPlayer;
-  if (!targetPlayerName) {
-    alert('Select a player or use the specific pay debt button.');
-    return;
-  }
-  const player = players[targetPlayerName];
-  if (player && player.debt > 0 && player.chips > 0) {
-    const payment = Math.min(player.chips, player.debt);
-    player.chips -= payment;
-    player.debt -= payment;
-    console.log(`${targetPlayerName} paid ${payment} towards debt. Remaining debt: ${player.debt}, Chips: ${player.chips}`);
-    updatePlayerArea(); // This will update their display and the Wall of Shame
-    savePlayers();
-  } else if (player && player.debt <= 0) {
-    alert(`${targetPlayerName} has no debt to pay.`);
-  } else if (player && player.chips <= 0) {
-    alert(`${targetPlayerName} has no chips to pay with.`);
-  } else {
-    alert(`Player ${targetPlayerName} not found.`);
-  }
-}
-
-function resetPlayers() {
-  if (confirm('Are you sure you want to reset all player data?')) {
-    // Reset player data
-    players = {};
-    selectedPlayer = null;
-
-    // Reset game state
-    gameInProgress = false;
-    currentRound = 1;
-    drawnCards = [];
-    activePlayers.clear(); // Clear the active players set
-
-    // Clear the drawn cards display
-    updateDrawnCardsDisplay();
-
-    // Reset the deck
-    initializeDeck();
-
-    // Update UI
-    updateRoundInfo();
-    updatePlayerArea();
-
-    // Reset and disable the draw button
-    const drawButton = document.getElementById('drawCardButton');
-    if (drawButton) {
-        drawButton.textContent = 'Draw Card';
-        drawButton.disabled = true; // Disable until a new game starts
-    }
-
-    // Save the reset state
-    savePlayers();
-  }
-}
-
-function updatePlayerArea() {
-    const playerArea = document.getElementById('playersPanel');
-    playerArea.innerHTML = '';
-
-    Object.entries(players).forEach(([name, player]) => {
-        const playerDiv = createPlayerControlsDiv(name, player);
-        playerArea.appendChild(playerDiv);
-    });
-    updateGameButtons();
-    updateWallOfShame(); 
-    calculateAndApplyColumnWidths(); 
-}
-
-function createPlayerControlsDiv(name, player) {
-    const playerDiv = document.createElement('div');
-    playerDiv.className = 'player-controls';
-
-    // Header row: name (left), chips (right)
-    const headerRow = document.createElement('div');
-    headerRow.className = 'player-header-row';
-    const nameDiv = document.createElement('div');
-    nameDiv.className = 'player-name';
-    nameDiv.textContent = name;
-    const chipsDiv = document.createElement('div');
-    chipsDiv.className = 'player-chips';
-    chipsDiv.textContent = `Chips: ${player.chips}`;
-    headerRow.appendChild(nameDiv);
-    headerRow.appendChild(chipsDiv);
-    playerDiv.appendChild(headerRow);
-
-    // Bet row: bet input, Use Last, Pay Debt (all inline)
-    const betRow = document.createElement('div');
-    betRow.className = 'player-bet-row';
-    const betInputId = `betInput_${name}`;
-    const betInput = document.createElement('input');
-    betInput.type = 'number';
-    betInput.id = betInputId;
-    betInput.value = player.lastBet;
-    betInput.min = 0;
-    betInput.max = player.chips > 0 ? player.chips : 0;
-    betInput.onchange = () => {
-        let newBet = parseInt(betInput.value) || 0;
-        if (newBet < 0) newBet = 0;
-        if (newBet > player.chips) {
-            newBet = player.chips;
-            betInput.value = newBet;
-            alert("Bet cannot exceed current chips. Bet adjusted.");
-        }
-        player.lastBet = newBet;
-        activePlayers = getActivePlayers(); // Update global activePlayers set
-        updatePlayerArea();   // Redraws player card, should show choice buttons now
-        updateGameButtons();  // Updates Draw Card button state (still disabled if no choice yet)
-        updateRoundInfo();    // ADDED: Update instruction text like "Round 1: Guess..."
-    };
-    betInput.readOnly = gamePhase === PHASE_PLAYING || gamePhase === PHASE_GAME_OVER || player.chips <= 0;
-    if (player.chips <= 0 && gamePhase !== PHASE_PLAYING) {
-        player.lastBet = 0;
-        betInput.value = 0;
-    }
-    betRow.appendChild(betInput);
-
-    // Only show "Use Last Bet" button during the betting phase
-    if (gamePhase === PHASE_BETTING && player.historicalBet > 0 && player.chips >= player.historicalBet) {
-        const useLastBetButton = document.createElement('button');
-        useLastBetButton.textContent = `Use Last (${player.historicalBet})`;
-        useLastBetButton.className = 'use-last-bet-button';
-        useLastBetButton.onclick = () => {
-            const betInputElement = document.getElementById(betInputId);
-            if (betInputElement) {
-                if (player.chips >= player.historicalBet) {
-                    betInputElement.value = player.historicalBet;
-                    betInputElement.dispatchEvent(new Event('change', { bubbles: true }));
-                } else {
-                    alert("Not enough chips to use last bet amount.");
-                }
-            }
-        };
-        betRow.appendChild(useLastBetButton);
-    }
-
-    if (player.debt > 0 && player.chips > 0) {
-        const payDebtButton = document.createElement('button');
-        payDebtButton.textContent = 'Pay Debt';
-        payDebtButton.className = 'choice-button';
-        payDebtButton.onclick = () => payDebt(name);
-        betRow.appendChild(payDebtButton);
-    }
-    playerDiv.appendChild(betRow);
-
-    // Action row: choice/cash-out buttons (inline, wrap if needed)
-    if (activePlayers.has(name) && player.lastBet > 0) {
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.className = 'choice-buttons';
-        let choices = [];
-        let createActiveChoiceButtons = false;
-
-        if (gamePhase === PHASE_BETTING) {
-            choices = [CHOICE_RED, CHOICE_BLACK];
-            createActiveChoiceButtons = true;
-        } else if (gamePhase === PHASE_PLAYING) {
-            createActiveChoiceButtons = true;
-            switch (currentRound) {
-                case 1: choices = [CHOICE_RED, CHOICE_BLACK]; break;
-                case 2: choices = [CHOICE_HIGHER, CHOICE_LOWER]; break;
-                case 3: choices = [CHOICE_INSIDE, CHOICE_OUTSIDE]; break;
-                case 4: choices = [SUIT_SPADES, SUIT_HEARTS, SUIT_DIAMONDS, SUIT_CLUBS]; break;
-                case 5: choices = []; break;
-            }
-            // Cash Out button first (if applicable)
-            if (currentRound > 1 && currentRound <= 5) {
-                const cashOutButton = document.createElement('button');
-                cashOutButton.className = 'cash-out-button';
-                const multiplierRoundForCashOut = (currentRound === 5) ? 4 : currentRound - 1;
-                const cashOutMultiplier = roundMultipliers[multiplierRoundForCashOut];
-                if (cashOutMultiplier !== undefined && player.lastBet > 0) {
-                    cashOutButton.textContent = `Cash Out (${cashOutMultiplier}x = ${player.lastBet * cashOutMultiplier} chips)`;
-                } else {
-                    cashOutButton.textContent = 'Cash Out (N/A)';
-                }
-                cashOutButton.onclick = () => handleCashOut(name);
-                buttonsContainer.appendChild(cashOutButton);
-            }
-            // Round 5: Special Input - Dropdown for card value
-            if (currentRound === 5) {
-                const valueSelect = document.createElement('select');
-                valueSelect.id = `r5_value_select_${name}`;
-                valueSelect.className = 'choice-button';
-                const placeholderOption = document.createElement('option');
-                placeholderOption.value = "";
-                placeholderOption.textContent = "Guess Value...";
-                placeholderOption.selected = true;
-                placeholderOption.disabled = true;
-                valueSelect.appendChild(placeholderOption);
-                CARD_VALUES_WITH_ACE_HIGH.forEach(val => {
-                    const option = document.createElement('option');
-                    option.value = val;
-                    option.textContent = val;
-                    valueSelect.appendChild(option);
-                });
-                if (player.currentChoice) {
-                    valueSelect.value = player.currentChoice;
-                }
-                valueSelect.onchange = function() {
-                    const selectedValue = this.value;
-                    if (selectedValue) {
-                        makeChoice(name, selectedValue);
-                    }
-                };
-                buttonsContainer.appendChild(valueSelect);
-            }
-        }
-        // Standard choice buttons for rounds 1-4
-        if (choices.length > 0 && currentRound < 5) {
-            choices.forEach(choiceText => {
-                const button = document.createElement('button');
-                button.className = 'choice-button';
-                button.textContent = choiceText.charAt(0).toUpperCase() + choiceText.slice(1);
-                if (createActiveChoiceButtons) {
-                    button.onclick = () => makeChoice(name, choiceText);
-                    button.disabled = false;
-                } else {
-                    button.disabled = true;
-                }
-                if (player.currentChoice && choiceText.toLowerCase() === player.currentChoice.toLowerCase()) {
-                    button.classList.add('selected');
-                }
-                buttonsContainer.appendChild(button);
-            });
-        }
-        if (buttonsContainer.hasChildNodes()) {
-            playerDiv.appendChild(buttonsContainer);
-        }
-    }
-    return playerDiv;
-}
-
-function calculateAndApplyColumnWidths() {
-    const columnClasses = ['.player-name', '.player-chips', '.player-bet', '.choice-buttons'];
-    // Ensure we only select elements within player rows, not the management row if it uses similar classes by mistake
-    const playerRows = document.querySelectorAll('#playersPanel .player-controls:not(.management-row)');
-
-    if (playerRows.length === 0) return; // No player rows to process
-
-    columnClasses.forEach(selector => {
-        let maxWidth = 0;
-        const elementsToMeasure = [];
-
-        playerRows.forEach(row => {
-            const el = row.querySelector(selector);
-            if (el) {
-                // Temporarily reset flex-basis to auto to measure natural content width
-                // This is important if this function is called multiple times (e.g., on resize)
-                el.style.flexBasis = 'auto'; 
-                elementsToMeasure.push(el);
-            }
-        });
-        
-        // Calculate max width after resetting basis (or rely on scrollWidth if basis was auto)
-        elementsToMeasure.forEach(el => {
-            // Force a reflow to ensure scrollWidth is accurate after style changes if any
-            // void el.offsetWidth; // Reading offsetWidth can trigger reflow
-            // Using getComputedStyle and width/padding/border or just scrollWidth
-            // For simplicity with box-sizing: border-box, scrollWidth should be okay.
-            if (el.scrollWidth > maxWidth) {
-                maxWidth = el.scrollWidth;
-            }
-        });
-
-        // Apply the found max width to all elements in that column
-        // Add a little padding/buffer to the max width for safety, e.g., 5-10px
-        const finalWidth = maxWidth + 5; // Add a small buffer
-        
-        elementsToMeasure.forEach(el => {
-            el.style.flexBasis = `${finalWidth}px`;
-        });
-        // console.log(`Applied width ${finalWidth}px to elements with selector ${selector}`);
-    });
-}
-
-function makeChoice(playerName, choice) {
-    const player = players[playerName];
-    if (player.lastBet <= 0) {
-        console.log(`Cannot make choice for ${playerName} - no bet placed`);
-        return;
-    }
-    
-    player.currentChoice = choice;
-
-    // updatePlayerArea will handle visual updates including selection and disabling buttons
-    updatePlayerArea(); 
-    updateGameButtons(); // Update main game button states (e.g., enable Draw Card if all choices made)
-    updateRoundInfo(); // Add this call to refresh round information and player count
-
-    console.log('Game State after choice:', {
-        currentRound,
-        gameInProgress,
-        activePlayers: Array.from(activePlayers),
-        drawnCards,
-        players: Object.fromEntries(
-            Object.entries(players).map(([name, p]) => [
-                name,
-                {
-                    chips: p.chips,
-                    lastBet: p.lastBet,
-                    currentChoice: p.currentChoice,
-                }
-            ])
-        )
-    });
-}
-
-async function drawCard() { // Made async to handle animation timing if needed, though not strictly with this approach yet
-    const deckElement = document.getElementById('deck');
-    const gameBoardPanel = document.getElementById('gameBoardPanel');
-    if (!deckElement || !gameBoardPanel) return;
-
-    console.log('[DrawCard] Called. State before draw:', {
-        gamePhase,
-        gameInProgress,
-        activePlayers: Array.from(activePlayers),
-        players: Object.fromEntries(Object.entries(players).map(([name, p]) => ({
-            [name]: {
-                lastBet: p.lastBet,
-                currentChoice: p.currentChoice,
-                chips: p.chips,
-                historicalBet: p.historicalBet // Log historicalBet
-            }
-        }))),
-        deckLength: deck.length,
-        drawnCards: drawnCards.map(card => card.value + card.suit)
-    });
-    if (gamePhase === PHASE_BETTING) {
-        if (activePlayers.size === 0 || !allActivePlayersMadeChoices()) {
-            console.log('[DrawCard] Early return: Not all active players have placed bets and made choices.');
-            alert('All active players must place bets and make their choices before starting.');
-            return;
-        }
-
-        activePlayers.forEach(playerName => {
-            const player = players[playerName];
-            // Store the bet they are starting the game with as historicalBet
-            if (player.lastBet > 0) {
-                player.historicalBet = player.lastBet;
-                console.log(`[DrawCard] Stored historicalBet for ${playerName}: ${player.historicalBet}`);
-            }
-            // Deduct current bet from chips
-            if (player.lastBet > 0) { 
-                player.chips -= player.lastBet;
-                console.log(`[DrawCard] Deducted ${player.lastBet} chips from ${playerName}. New chip count: ${player.chips}`);
-            }
-        });
-
-        gamePhase = PHASE_PLAYING;
-        console.log('[DrawCard] Transitioned to playing phase');
-        gameInProgress = true;
-        currentRound = 1;
-        drawnCards = [];
-        updateRoundInfo();
-        updatePlayerArea(); 
-        updateDeckDisplay();
-        updateGameButtons();
-        updateDebugNextCardDisplay();
-        console.log('[DrawCard] Game started.');
-    }
-    if (!allActivePlayersMadeChoices(true) || deck.length === 0) { // Pass true to check for playing phase
-        console.log('[DrawCard] Early return: Not all choices made or deck is empty.', {
-            allChoicesMade: allActivePlayersMadeChoices(true),
-            deckLength: deck.length
-        });
-        return;
-    }
-    const card = deck.pop();
-    if (!card) return; // Should not happen if deck.length check passed
-
-    // 1. Create and position the ghost card
-    const ghostCard = document.createElement('div');
-    ghostCard.style.position = 'absolute';
-    ghostCard.style.width = deckElement.offsetWidth + 'px'; // Start with deck size
-    ghostCard.style.height = deckElement.offsetHeight + 'px';
-    ghostCard.style.background = getComputedStyle(deckElement).background;
-    ghostCard.style.borderRadius = getComputedStyle(deckElement).borderRadius;
-    ghostCard.style.border = getComputedStyle(deckElement).border;
-    ghostCard.style.boxShadow = getComputedStyle(deckElement).boxShadow;
-    ghostCard.style.display = 'flex';
-    ghostCard.style.alignItems = 'center';
-    ghostCard.style.justifyContent = 'center';
-    ghostCard.style.zIndex = '1000';
-    ghostCard.style.transition = 'transform 0.5s ease-in-out, opacity 0.4s ease-in-out, width 0.5s ease-in-out, height 0.5s ease-in-out';
-
-    const deckRect = deckElement.getBoundingClientRect();
-    const boardRect = gameBoardPanel.getBoundingClientRect();
-    ghostCard.style.left = (deckRect.left - boardRect.left) + 'px';
-    ghostCard.style.top = (deckRect.top - boardRect.top) + 'px';
-    gameBoardPanel.appendChild(ghostCard);
-
-    // 2. Add actual card to array and update display (with last card initially invisible)
-    drawnCards.push(card); 
-    updateDrawnCardsDisplay(true); // True indicates to mark the last card for animation target
-    console.log('[DrawCard] Drew card:', card, 'Drawn cards:', drawnCards.map(c => c.value + c.suit));
-
-    // 3. Get target position (the actual, now invisible, new card)
-    const drawnCardsContainer = document.getElementById('drawnCards');
-    const actualCardElement = drawnCardsContainer.lastElementChild;
-
-    if (actualCardElement) {
-        const targetRect = actualCardElement.getBoundingClientRect();
-
-        // 4. Animate ghost card
-        requestAnimationFrame(() => { // Ensure styles are applied before transition starts
-            ghostCard.style.transform = `translate(${(targetRect.left - deckRect.left)}px, ${(targetRect.top - deckRect.top)}px) scale(1)`;
-            // Match final card size during animation
-            ghostCard.style.width = targetRect.width + 'px'; 
-            ghostCard.style.height = targetRect.height + 'px';
-            // ghostCard.style.opacity = '0'; // Fade out as it arrives
-
-            ghostCard.addEventListener('transitionend', () => {
-                if (ghostCard.parentNode) {
-                    ghostCard.parentNode.removeChild(ghostCard);
-                }
-                actualCardElement.classList.remove('drawn-card-target'); // Make actual card visible
-            }, { once: true });
-        });
-    } else {
-        // Fallback if target element not found, remove ghost immediately
-        if (ghostCard.parentNode) ghostCard.parentNode.removeChild(ghostCard);
-    }
-
-    updateDeckDisplay();
-    processRoundResults(card);
-    updatePlayerArea();
-    updateGameButtons();
-    updateDebugNextCardDisplay();
-    console.log('[DrawCard] State after draw:', {
-        gamePhase,
-        gameInProgress,
-        activePlayers: Array.from(activePlayers),
-        players: Object.fromEntries(Object.entries(players).map(([name, p]) => ({
-            [name]: {
-                lastBet: p.lastBet,
-                currentChoice: p.currentChoice,
-                chips: p.chips,
-                historicalBet: p.historicalBet // Log historicalBet
-            }
-        }))),
-        deckLength: deck.length,
-        drawnCards: drawnCards.map(card => card.value + card.suit)
-    });
-}
-
-function updateDrawnCardsDisplay(animateLastCard = false) {
-  const container = document.getElementById('drawnCards');
-  container.innerHTML = '';
-  
-  drawnCards.forEach((card, index) => {
-    const cardElement = document.createElement('div');
-    cardElement.className = 'card';
-    cardElement.style.color = ['♥', '♦'].includes(card.suit) ? 'red' : 'black';
-    cardElement.textContent = `${card.value}${card.suit}`;
-
-    if (animateLastCard && index === drawnCards.length - 1) {
-      cardElement.classList.add('drawn-card-target');
-    }
-
-    container.appendChild(cardElement);
-  });
-}
-
-function processRoundResults(card) {
-    const isRed = [SUIT_HEARTS, SUIT_DIAMONDS].includes(card.suit);
-    const playersToProcess = new Set(activePlayers);
-
-    playersToProcess.forEach(playerName => {
-        const player = players[playerName];
-        const choice = player.currentChoice;
-        let playerLost = false;
-
-        switch (currentRound) {
-            case 1: playerLost = evaluateRound1Win(choice, isRed); break;
-            case 2: playerLost = evaluateRound2Win(choice, card, drawnCards); break;
-            case 3: playerLost = evaluateRound3Win(choice, card, drawnCards); break;
-            case 4: playerLost = evaluateRound4Win(choice, card); break;
-            case 5: playerLost = evaluateRound5Win(choice, card); break;
-        }
-
-        console.log(`Player ${playerName} result:`, { choice, cardSuit: card.suit, cardValue: card.value, playerLost, currentRound });
-
-        if (playerLost) {
-            activePlayers.delete(playerName);
-            player.lastBet = 0;
-            player.currentChoice = undefined;
-            console.log(`Player ${playerName} lost round ${currentRound} and was removed from activePlayers.`);
-        } else {
-            player.currentChoice = undefined; 
-            if (currentRound === 4 && !playerLost) {
-                console.log(`Player ${playerName} won Round 4. Bet carries to Round 5 or cash out option.`);
-            } else if (currentRound === 5 && !playerLost) {
-                const multiplier = roundMultipliers[currentRound];
-                player.chips += player.lastBet * multiplier;
-                console.log(`Player ${playerName} won Round 5! Awarded ${player.lastBet * multiplier} chips.`);
-                player.lastBet = 0;
-                activePlayers.delete(playerName);
-                console.log(`Player ${playerName} won Round 5 and was removed from activePlayers.`);
-            } else if (playerLost) {
-                activePlayers.delete(playerName);
-                player.lastBet = 0;
-                console.log(`Player ${playerName} lost round ${currentRound} and was removed from activePlayers.`);
-            }
-        }
-    });
-
-    if (activePlayers.size === 0) {
-        console.log('[ProcessResults] All players processed or eliminated. Ending game.');
-        endGame();
-        return;
-    }
-
-    const roundBeforeIncrement = currentRound;
-    console.log(`[ProcessResults] CHECKPOINT: Round before increment decision: ${roundBeforeIncrement}. Active players: ${activePlayers.size}, names: ${Array.from(activePlayers).join(', ')}`);
-
-    if (roundBeforeIncrement < 5) {
-        currentRound++;
-        console.log(`[ProcessResults] Incremented to round ${currentRound}. Updating info.`);
-        updateRoundInfo(); 
-    } else { 
-        console.log(`[ProcessResults] roundBeforeIncrement (${roundBeforeIncrement}) was not < 5. Ending game.`);
-        endGame();
-    }
-    
-    console.log(`[ProcessResults] About to call updatePlayerArea. Current round is NOW: ${currentRound}. Game phase: ${gamePhase}. Active players: ${activePlayers.size}`);
-    updatePlayerArea(); 
-}
-
-function evaluateRound1Win(choice, isRed) {
-    return (choice === CHOICE_RED && !isRed) || (choice === CHOICE_BLACK && isRed);
-}
-
-function evaluateRound2Win(choice, currentCard, allDrawnCards) {
-    if (allDrawnCards.length < 2) return true; // Should not happen if logic is correct, treat as loss
-    const currentValue = getCardValue(currentCard.value);
-    const prevValue = getCardValue(allDrawnCards[allDrawnCards.length - 2].value);
-    if ((choice === CHOICE_HIGHER && currentValue < prevValue) || 
-        (choice === CHOICE_LOWER && currentValue >= prevValue)) { 
-        return true;
-    }
-    return false;
-}
-
-function evaluateRound3Win(choice, currentCard, allDrawnCards) {
-    if (allDrawnCards.length < 2) { // Needs at least 2 previous cards for range, current makes it 3rd for this logic
-        console.error("Error: Not enough cards for Round 3 logic (needs 2 previous cards).");
-        return true; // Treat as loss
-    }
-    // The range is defined by the first two cards of the game for this player in this implementation
-    const card1Val = getCardValue(allDrawnCards[0].value);
-    const card2Val = getCardValue(allDrawnCards[1].value);
-    const minVal = Math.min(card1Val, card2Val);
-    const maxVal = Math.max(card1Val, card2Val);
-    console.log(`[evaluateRound3Win] minVal: ${minVal}, maxVal: ${maxVal}`);
-    const currentCardVal = getCardValue(currentCard.value);
-
-    if (choice === CHOICE_OUTSIDE) {
-        return currentCardVal >= minVal && currentCardVal <= maxVal;
-    }
-    
-    return currentCardVal < minVal || currentCardVal > maxVal;
-}
-
-function evaluateRound4Win(choice, card) {
-    return choice !== card.suit;
-}
-
-function evaluateRound5Win(choice, card) {
-    return choice !== card.value;
-}
-
-function getCardValue(value) {
-  const values = {
-    'A': 14,
-    'K': 13,
-    'Q': 12,
-    'J': 11
-  };
-  return values[value] || parseInt(value);
-}
-
-function updateRoundInfo() {
-    const roundInfo = document.getElementById('roundInfo');
-    const multiplierInfo = document.getElementById('roundMultiplier');
-
-    if (gamePhase === PHASE_GAME_OVER) {
-        roundInfo.textContent = 'Game Over.\n Click \'New Game\' to play again.';
-        const anyHistoricalBets = Object.values(players).some(p => p.historicalBet > 0);
-        if (anyHistoricalBets) {
-            multiplierInfo.textContent = 'You can use \'Use Last Bet\' to repeat previous bets.';
-        } else {
-            multiplierInfo.textContent = 'Deck will be reshuffled on New Game.';
-        }
-    } else if (gamePhase === PHASE_BETTING) {
-        const currentActivePlayers = getActivePlayers();
-        if (currentActivePlayers.size === 0) {
-            roundInfo.textContent = 'Betting Phase: Place your bets!';
-            multiplierInfo.textContent = 'Deck will be reshuffled on New Game.';
-        } else {
-            const playersNeedingChoice = Array.from(currentActivePlayers).filter(name => !players[name].currentChoice).length;
-            if (playersNeedingChoice > 0) {
-                roundInfo.textContent = 'Round 1: Guess if the card is Red or Black';
-                multiplierInfo.textContent = `Waiting for ${playersNeedingChoice} player(s) to choose.`;
-            } else {
-                roundInfo.textContent = 'Ready to Play!';
-                multiplierInfo.textContent = 'Click Draw Card to start the game.';
-            }
-        }
-    } else if (gamePhase === PHASE_PLAYING) {
-        switch (currentRound) {
-            case 1:
-                roundInfo.textContent = 'Round 1: Guess if the card is Red or Black';
-                multiplierInfo.textContent = `Current Round: 1 (${roundMultipliers[1]}x multiplier if you cash out)`;
-                break;
-            case 2:
-                roundInfo.textContent = 'Round 2: Guess if the next card is higher or lower';
-                multiplierInfo.textContent = `Current Round: 2 (${roundMultipliers[2]}x multiplier if you cash out)`;
-                break;
-            case 3:
-                roundInfo.textContent = 'Round 3: Guess if the next card is inside or outside';
-                multiplierInfo.textContent = `Current Round: 3 (${roundMultipliers[3]}x multiplier if you cash out)`;
-                break;
-            case 4:
-                roundInfo.textContent = 'Round 4: Guess the suit';
-                multiplierInfo.textContent = `Current Round: 4 (${roundMultipliers[4]}x multiplier if you win this round or cash out next round)`;
-                break;
-            case 5:
-                roundInfo.textContent = 'Round 5: Cash out (20x) OR Guess the exact card value (50x!)';
-                multiplierInfo.textContent = `Guess value for ${roundMultipliers[5]}x! Cash out now for ${roundMultipliers[4]}x on your original bet.`;
-                break;
-        }
-    }
-}
-
-function handleCashOut(playerName) {
-    const player = players[playerName];
-
-    if (gamePhase !== PHASE_PLAYING || !activePlayers.has(playerName) || player.lastBet <= 0 || (currentRound <= 1 && currentRound !== 5) ) {
-        if (!(currentRound === 5 && player.lastBet > 0 && activePlayers.has(playerName))) {
-            console.error(`[handleCashOut] Invalid conditions for cashing out player ${playerName}.`, {
-                gamePhase,
-                currentRound,
-                isPlayerActive: activePlayers.has(playerName),
-                playerBet: player.lastBet
-            });
-            return;
-        }
-    }
-
-    const multiplierRound = (currentRound === 5) ? 4 : currentRound - 1;
-    const multiplier = roundMultipliers[multiplierRound];
-
-    if (multiplier === undefined) {
-        console.error(`[handleCashOut] No multiplier found for previous round ${multiplierRound}.`);
-        return;
-    }
-
-    const winnings = player.lastBet * multiplier;
-    player.chips += winnings;
-    
-    console.log(`[handleCashOut] Player ${playerName} cashed out. Bet: ${player.lastBet}, Multiplier: ${multiplier}x, Winnings: ${winnings}, New Chips: ${player.chips}`);
-
-    player.lastBet = 0;
-
-    activePlayers.delete(playerName);
-    console.log(`[handleCashOut] Player ${playerName} removed from activePlayers. Active players:`, Array.from(activePlayers));
-
-    updatePlayerArea(); 
-    updateGameButtons(); 
-    savePlayers();
-
-    if (activePlayers.size === 0 && gameInProgress) {
-        console.log('[handleCashOut] All active players have cashed out or been eliminated. Ending game.');
-        endGame();
-    }
-}
-
-function endGame() {
-    console.log('[endGame] Game Over.');
-    gameInProgress = false;
-    gamePhase = PHASE_GAME_OVER; // Explicitly set to gameOver
-    currentRound = 1; // Reset for display consistency
-    
-    // Reset current choices for all players, bets remain as they were at game end.
-    Object.values(players).forEach(p => {
-        p.currentChoice = undefined;
-    });
-
-    updateDeckDisplay(); // Reflects deck state at end of game
-    updateRoundInfo();
-    updatePlayerArea(); 
-    updateGameButtons(); 
-    savePlayers();
-}
-
-function updateWallOfShame() {
-    const wallOfShameArea = document.getElementById('wallOfShameArea');
-    const wallOfShameContent = document.getElementById('wallOfShameContent');
-    wallOfShameContent.innerHTML = ''; // Clear previous entries
-
-    let hasDebt = false;
-    Object.entries(players).forEach(([name, player]) => {
-        if (player.debt > 0) {
-            hasDebt = true;
-            const debtEntry = document.createElement('p');
-            debtEntry.textContent = `${name}: ${player.debt} chips in debt`;
-            wallOfShameContent.appendChild(debtEntry);
-        }
-    });
-
-    if (hasDebt) {
-        wallOfShameArea.style.display = ''; // Show the Wall of Shame
-    } else {
-        wallOfShameArea.style.display = 'none'; // Hide if no one is in debt
-    }
-}
-
-// Add new function to start a new game
-function startNewGame() {
-    console.log('[startNewGame] CLICKED');
-    gamePhase = PHASE_BETTING;
-    gameInProgress = false;
-    initializeDeck(); // CRITICAL: Initialize a new deck
-    currentRound = 1;
-    drawnCards = []; // Clear drawn cards from any previous game
-    updateDrawnCardsDisplay();
-    updateDeckDisplay(); // Update deck display after initializing
-
-    // Reset only choices; bets placed during 'gameOver' or newly set bets are preserved.
-    Object.values(players).forEach(player => {
-        player.currentChoice = undefined;
-    });
-    
-    activePlayers = getActivePlayers(); // Recalculate active players based on current bets
-
-    updateRoundInfo();
-    updatePlayerArea();
-    updateGameButtons();
-    savePlayers();
-}
-
-// Add this new function to check game state
-function shouldGameBeInProgress() {
-    // Check if any players have bets placed
-    const hasBets = Object.values(players).some(player => player.lastBet > 0);
-    // Check if any players are active
-    const hasActivePlayers = activePlayers.size > 0;
-    // Check if we have a deck initialized
-    const hasDeck = deck && deck.length > 0;
-    
-    return hasBets && hasActivePlayers && hasDeck;
-}
-
-function updateDeckDisplay() {
-  console.log('[updateDeckDisplay] deck:', deck);
-  const deckDiv = document.getElementById('deck');
-    
-    if (deckDiv) {
-      // Update the CSS variable
-      deckDiv.setAttribute('data-count', deck.length > 0 ? deck.length : 'Empty');
-    }
-}
-
-function toggleSelectAllPlayers(selectAllCheckbox) {
-    const checkboxes = document.querySelectorAll('.player-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAllCheckbox.checked;
-    });
-}
-
-function saveGameState() {
-  const gameState = {
-    players,
-    deck,
-    drawnCards,
-    currentRound,
-    gameInProgress,
-    activePlayers: Array.from(activePlayers)
-  };
-  localStorage.setItem('gameState', JSON.stringify(gameState));
-}
-
-function loadGameState() {
-  const savedState = localStorage.getItem('gameState');
-  if (savedState) {
-    const gameState = JSON.parse(savedState);
-    players = gameState.players;
-    deck = gameState.deck;
-    drawnCards = gameState.drawnCards;
-    currentRound = gameState.currentRound;
-    gameInProgress = gameState.gameInProgress;
-    activePlayers = new Set(gameState.activePlayers);
-    updatePlayerArea();
-    updateRoundInfo();
-    updateDebugNextCardDisplay();
-  }
-}
-
-// Call loadGameState on window load
-window.onload = () => {
-  loadGameState();
-  updateRoundInfo();
-  updatePlayerArea();
-  updateGameButtons();
-  updateDeckDisplay();
-  document.getElementById('debugArea').style.display = 'block';
-};
-
-// Update savePlayers to save the entire game state
-function savePlayers() {
-  saveGameState();
-  updateDeckDisplay();
-  updateDebugNextCardDisplay();
-}
-
-// Helper: Get active players (bet > 0)
-function getActivePlayers() {
-    return new Set(Object.keys(players).filter(name => players[name].lastBet > 0));
-}
-
-// Helper: Check if all active players have made their choices
-function allActivePlayersMadeChoices() {
-    if (activePlayers.size === 0) return false;
-    return Array.from(activePlayers).every(name => players[name].currentChoice !== undefined);
-}
-
-// Helper: Reset all players for a new game
-function resetAllPlayers() {
-    Object.keys(players).forEach(playerName => {
-        players[playerName].currentChoice = undefined;
-        players[playerName].lastBet = 0;
-    });
-}
-
-// Helper: Update Draw Card button state and label
-function updateDrawButtonState() {
-    const drawButton = document.getElementById('drawCardButton');
-    if (!drawButton) return;
-    if (!gameInProgress) {
-        if (activePlayers.size > 0 && allActivePlayersMadeChoices()) {
-            drawButton.disabled = false;
-            drawButton.textContent = 'Draw Card';
-        } else {
-            drawButton.disabled = true;
-            drawButton.textContent = 'Draw Card';
-        }
-    } else {
-        drawButton.textContent = 'Draw Card';
-        drawButton.disabled = !allActivePlayersMadeChoices();
-    }
-}
-
-function updateGameButtons() {
-    const newGameButton = document.getElementById('newGameButton');
-    const drawCardButton = document.getElementById('drawCardButton');
-    if (!newGameButton || !drawCardButton) return;
-
-    // Ensure they have the shared class for styling if New Game button was moved
-    // and might not have it from original HTML location.
-    newGameButton.className = 'draw-button'; 
-
-    const currentActivePlayers = getActivePlayers();
-    const allChoicesMadeForBetting = Array.from(currentActivePlayers).every(name => players[name].currentChoice !== undefined && players[name].lastBet > 0);
-    const allChoicesMadeForPlaying = Array.from(activePlayers).every(name => players[name].currentChoice !== undefined);
-
-    if (gamePhase === PHASE_GAME_OVER) {
-        newGameButton.style.display = '';
-        drawCardButton.style.display = 'none';
-        newGameButton.disabled = false;
-    } else if (gamePhase === PHASE_BETTING) {
-        // In betting phase, always show Draw Card, hide New Game.
-        // Draw Card is disabled until all players with bets have made choices.
-        newGameButton.style.display = 'none';
-        drawCardButton.style.display = '';
-        drawCardButton.disabled = !(currentActivePlayers.size > 0 && allChoicesMadeForBetting);
-    } else if (gamePhase === PHASE_PLAYING) {
-        newGameButton.style.display = 'none';
-        drawCardButton.style.display = '';
-        drawCardButton.disabled = !(activePlayers.size > 0 && allChoicesMadeForPlaying);
-    }
-}
-
-function updateDebugNextCardDisplay() {
-    const debugNextCardDiv = document.getElementById('debugNextCard');
-    const isChecked = document.getElementById('toggleDebugNextCard').checked;
-    
-    const theme = localStorage.getItem('theme');
-
-    if (!isChecked) {
-        debugNextCardDiv.textContent = 'Next Card: (Hidden)';
-        debugNextCardDiv.style.color = theme === 'dark' ? 'white' : 'black';
-        return;
-    }
-
-    if (deck && deck.length > 0) {
-        const nextCard = deck[deck.length - 1]; // Peek at the last card (next to be drawn)
-        debugNextCardDiv.textContent = `Next Card: ${nextCard.value}${nextCard.suit}`;
-        debugNextCardDiv.style.color = [SUIT_HEARTS, SUIT_DIAMONDS].includes(nextCard.suit) ? 'red' : theme === 'dark' ? 'white' : 'black';
-    } else {
-        debugNextCardDiv.textContent = 'Next Card: (Deck Empty)';
-        debugNextCardDiv.style.color =  theme === 'dark' ? 'white' : 'black';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  // Setup button event listeners
-  const newGameBtn = document.getElementById('newGameButton');
-  if (newGameBtn) newGameBtn.onclick = startNewGame;
-
-  const resetBtn = document.getElementById('resetPlayersButton');
-  if (resetBtn) resetBtn.onclick = resetPlayers;
-
-  const themeSelectorElement = document.getElementById('themeSelector');
-  if (themeSelectorElement) themeSelectorElement.onchange = (event) => applyTheme(event.target.value);
-
-  const drawCardBtn = document.getElementById('drawCardButton');
-  if (drawCardBtn) drawCardBtn.onclick = drawCard;
-
-  // Existing DOMContentLoaded logic for add player form (if any, or integrate if separate)
-  const nameInput = document.getElementById('newPlayerNameInput');
-  const chipsInput = document.getElementById('newPlayerChipsInput');
-  const actionButton = document.getElementById('newAddPlayerButton');
-  const dataList = document.getElementById('playerDatalist');
-
-  // Populate datalist with player names
-  function updateDatalist() {
-    if (!dataList) return; // Guard if datalist is not present
-    dataList.innerHTML = '';
-    Object.keys(players).forEach(playerName => {
-      const option = document.createElement('option');
-      option.value = playerName;
-      dataList.appendChild(option);
-    });
-  }
-  
-  if (nameInput && chipsInput && actionButton && dataList) {
-    updateDatalist(); // Initial population
-
-    nameInput.addEventListener('input', () => {
-      const enteredName = nameInput.value.trim();
-      if (players[enteredName]) {
-        chipsInput.placeholder = 'Loaning Chips';
-        actionButton.textContent = '$ Apply for Financial Assistance';
-      } else {
-        chipsInput.placeholder = 'Starting Chips';
-        actionButton.textContent = '+ Add Player';
-      }
-    });
-
-    // Also update datalist when players change - this might need to be adapted
-    // if savePlayers itself is not available globally or needs specific context.
-    // For now, assuming savePlayers will trigger necessary updates.
-    // To be absolutely sure datalist updates, it might be better to call
-    // updateDatalist() from within handleAddPlayerOrLoan or similar functions
-    // that modify the players object.
-    // However, the existing pattern is to hook into savePlayers.
-    // To be absolutely sure datalist updates, it might be better to call
-    // updateDatalist() from within handleAddPlayerOrLoan or similar functions
-    // that modify the players object.
-    // However, the existing pattern is to hook into savePlayers.
-    if (typeof origSavePlayers !== 'undefined') {
-        const currentSavePlayers = window.savePlayers;
-        window.savePlayers = function() {
-            currentSavePlayers.apply(this, arguments); // Call the potentially overridden savePlayers
-            updateDatalist(); // Then update our datalist
-        };
-    } else { // Fallback if origSavePlayers wasn't captured (e.g. script order)
-        const currentSavePlayers = window.savePlayers;
-        window.savePlayers = function() {
-            currentSavePlayers.apply(this, arguments);
-            updateDatalist();
-        };
-    }
-  }
-  
-  // Initial UI updates that depend on DOM ready
-  updateRoundInfo();
-  updatePlayerArea(); // This will also call updateGameButtons
-  updateDeckDisplay();
-  updateDebugNextCardDisplay();
-  document.getElementById('debugArea').style.display = 'block'; // Assuming debug area should be visible by default now
-  
-  // The window.onload function might be redundant or could be merged here if all it does is DOM manipulation and init calls.
-  // For now, let's ensure the original onload logic is still respected or moved.
-  // The original onload was:
-  /*
-  window.onload = () => {
-    loadGameState(); // This should ideally happen before DOM content specific listeners if they rely on game state
-    updateRoundInfo();
-    updatePlayerArea();
-    updateGameButtons(); // updatePlayerArea calls this
-    updateDeckDisplay();
-    document.getElementById('debugArea').style.display = 'block';
-  };
-  */
-  // It's generally better to have one clear entry point.
-  // loadGameState() should happen early.
-  loadGameState(); // Load state first
-  // Then update UI based on loaded state and DOM readiness.
-  // The calls at the end of this DOMContentLoaded listener should cover the UI updates.
-
-});
-
-</script>
+        <div class="aux-card wall-of-shame" id="wallOfShameArea" style="display: none;">
+          <h3><span class="icon">⚡</span>Wall of Shame</h3>
+          <div id="wallOfShameContent"></div>
+        </div>
+        <div class="aux-card" id="debugArea" style="display: none; margin-top: 15px;">
+          <h4><span class="icon">🐞</span>Debug Info</h4>
+          <div>
+            <label for="toggleDebugNextCard">Show Next Card: </label>
+            <input type="checkbox" id="toggleDebugNextCard" onchange="updateDebugNextCardDisplay()">
+          </div>
+          <div id="debugNextCard" style="margin-top: 5px; font-weight: bold; min-height: 20px;">
+            Next Card: (Hidden)
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div> <!-- Closing gameViewContainer -->
+
+  <!-- Inline scripts removed, now using external classic-mode.js and main.js -->
+
+  <!-- Load JavaScript files -->
+  <script src="core-game-rules.js"></script>
+  <script src="classic-mode.js"></script>
+  <script src="campaign-mode.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>

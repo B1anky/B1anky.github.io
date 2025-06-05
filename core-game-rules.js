@@ -75,8 +75,7 @@ function evaluateRound1Win(choice, cardSuit) {
 }
 
 function evaluateRound2Win(choice, currentCardValue, previousCardValue) {
-    if (currentCardValue === previousCardValue) return false; // Push/loss on exact match for H/L
-    if (choice === CHOICE_HIGHER) return currentCardValue > previousCardValue;
+    if (choice === CHOICE_HIGHER) return currentCardValue >= previousCardValue;
     if (choice === CHOICE_LOWER) return currentCardValue < previousCardValue;
     return false; // Should not happen
 }
@@ -85,10 +84,8 @@ function evaluateRound3Win(choice, currentCardValue, firstCardValue, secondCardV
     const minVal = Math.min(firstCardValue, secondCardValue);
     const maxVal = Math.max(firstCardValue, secondCardValue);
 
-    if (currentCardValue === minVal || currentCardValue === maxVal) return false; // Push/loss if lands on posts
-
     if (choice === CHOICE_INSIDE) {
-        return currentCardValue > minVal && currentCardValue < maxVal;
+        return currentCardValue >= minVal && currentCardValue <= maxVal;
     }
     if (choice === CHOICE_OUTSIDE) {
         return currentCardValue < minVal || currentCardValue > maxVal;

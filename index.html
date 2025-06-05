@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ride the Bus - Card Game</title>
+  <title>Bus or Bust</title>
   <script>
     (function() {
       const knownThemes = ["neon", "light", "dark-standard", "casino-green"]; // Must match availableThemes in classic-mode.js
@@ -31,6 +31,11 @@
       --ncc-shadow: 0 2px 16px 0 rgba(0,255,255,0.08);
       --ncc-radius: 10px;
       --ncc-font: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+      --ncc-panel-rgb: 24, 24, 42;
+      --ncc-accent-rgb: 0, 255, 247;
+      --ncc-text-rgb: 224, 224, 255;
+      --ncc-error-rgb: 255, 51, 51; /* For error/alert text if needed */
+      --ncc-accent3-rgb: 0, 255, 133; /* For --ncc-accent3 */
     }
 
     [data-theme="light"] {
@@ -45,6 +50,11 @@
       --ncc-text2: #6c757d; 
       --ncc-border: #007bff; 
       --ncc-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --ncc-panel-rgb: 255, 255, 255; /* #ffffff */
+      --ncc-accent-rgb: 0, 123, 255;  /* #007bff */
+      --ncc-text-rgb: 33, 37, 41;    /* #212529 */
+      --ncc-error-rgb: 220, 53, 69;   /* #dc3545 */
+      --ncc-accent3-rgb: 40, 167, 69; /* #28a745 */
     }
 
     [data-theme="dark-standard"] {
@@ -59,6 +69,11 @@
       --ncc-text2: #adb5bd; 
       --ncc-border: #0d6efd; 
       --ncc-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      --ncc-panel-rgb: 52, 58, 64;   /* #343a40 */
+      --ncc-accent-rgb: 13, 110, 253; /* #0d6efd */
+      --ncc-text-rgb: 248, 249, 250;  /* #f8f9fa */
+      --ncc-error-rgb: 255, 107, 107; /* #ff6b6b */
+      --ncc-accent3-rgb: 32, 201, 151;/* #20c997 */
     }
 
     [data-theme="casino-green"] {
@@ -73,6 +88,11 @@
       --ncc-text2: #E0E0E0; 
       --ncc-border: #FFD700; 
       --ncc-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      --ncc-panel-rgb: 42, 138, 50;   /* #2A8A32 */
+      --ncc-accent-rgb: 255, 215, 0;  /* #FFD700 */
+      --ncc-text-rgb: 255, 255, 255;  /* #FFFFFF */
+      --ncc-error-rgb: 255, 99, 71;   /* #FF6347 */
+      --ncc-accent3-rgb: 184, 134, 11;/* #B8860B */
     }
 
     html {
@@ -163,7 +183,7 @@
       background: var(--ncc-panel);
       border-radius: var(--ncc-radius);
       box-shadow: var(--ncc-shadow);
-      padding: 1.5rem 1rem;
+      padding: 1rem;
       display: flex;
       flex-direction: column;
       min-width: 0;
@@ -174,8 +194,9 @@
       min-height: 400px;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1rem;
       position: relative;
+      padding: 1rem;
     }
     .round-info, .round-multiplier {
       background: var(--ncc-card);
@@ -338,19 +359,35 @@
       font-weight: 600;
       margin: 0;
     }
+    .player-bet-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 20px;
+      gap: 0;
+    }
     .player-bet-row input[type="number"] {
-      padding: 0.18rem 0.4rem;
-      font-size: 0.95rem;
-      background: var(--ncc-panel);
+      padding-top: 0.7rem;
+      padding-bottom: 0.7rem;
+      padding-left: 1rem;
+      padding-right: 0.5rem;
+      font-size: 1.2rem;
+      background: var(--ncc-card);
       color: var(--ncc-text);
-      border: 1.5px solid var(--ncc-border);
-      border-radius: 6px;
-      transition: border-color 0.2s;
+      border: 2px solid var(--ncc-border);
+      border-right: none;
+      border-top-left-radius: var(--ncc-radius);
+      border-bottom-left-radius: var(--ncc-radius);
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      transition: border-color 0.2s, box-shadow 0.2s;
       font-family: var(--ncc-font);
-      min-width: 3.5rem;
-      max-width: 7rem;
-      text-align: right;
+      min-width: 100px;
+      max-width: 150px;
+      text-align: center;
       -moz-appearance: textfield;
+      box-shadow: var(--ncc-shadow);
     }
     .player-bet-row input[type="number"]::-webkit-outer-spin-button,
     .player-bet-row input[type="number"]::-webkit-inner-spin-button {
@@ -360,46 +397,70 @@
     .player-bet-row input[type="number"]:focus {
       border-color: var(--ncc-accent2);
       outline: none;
-      box-shadow: 0 0 8px 0 var(--ncc-accent2);
+      box-shadow: 0 0 12px 0 var(--ncc-accent2), var(--ncc-shadow);
     }
     .player-bet-row button,
     .player-bet-row .use-last-bet-button {
-      padding: 0.18rem 0.5rem;
-      font-size: 0.95rem;
-      background: none;
+      padding: 0.7rem 1rem;
+      font-size: 1rem;
+      background: var(--ncc-panel);
       color: var(--ncc-accent3);
-      border: 1.5px solid var(--ncc-accent3);
+      border: 2px solid var(--ncc-accent3);
       border-radius: var(--ncc-radius);
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      box-shadow: var(--ncc-shadow);
     }
     .player-bet-row button:hover,
     .player-bet-row .use-last-bet-button:hover {
       background: var(--ncc-accent3);
       color: var(--ncc-bg);
+      border-color: var(--ncc-accent3);
     }
-    .choice-buttons > button {
-      min-width: 60px;
-      padding: 0.22rem 0.6rem;
-      font-size: 0.97rem;
-      background: var(--ncc-panel);
-      color: var(--ncc-accent);
-      border: 1.5px solid var(--ncc-accent);
-      border-radius: var(--ncc-radius);
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    .choice-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+      width: 100%;
     }
-    .choice-buttons > button:hover {
+    .choice-buttons > button,
+    select.choice-button {
       background: var(--ncc-accent);
       color: var(--ncc-bg);
-      border-color: var(--ncc-accent);
+      border: 2px solid var(--ncc-accent2);
+      border-radius: var(--ncc-radius);
+      padding: 0.6rem 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      box-shadow: 0 0 10px 0 var(--ncc-accent), var(--ncc-shadow);
+      cursor: pointer;
+      margin: 0;
+      transition: background 0.18s, color 0.18s, border 0.18s, transform 0.1s;
+      min-width: 150px;
+      text-align: center;
     }
-    .choice-button.selected,
-    .choice-button:active {
+    .choice-buttons > button:hover,
+    select.choice-button:hover {
       background: var(--ncc-accent2);
-      border-color: var(--ncc-accent2);
+      color: var(--ncc-bg);
+      border-color: var(--ncc-accent);
+      transform: translateY(-1px);
+    }
+    .choice-buttons > button.selected,
+    .choice-buttons > button:active {
+      background: var(--ncc-accent2);
+      border-color: var(--ncc-accent);
       color: var(--ncc-bg);
       box-shadow: 0 0 8px 0 var(--ncc-accent2), 0 0 12px 0 var(--ncc-accent2) inset;
+      transform: translateY(0px);
+    }
+    .choice-buttons > button:focus,
+    select.choice-button:focus {
+      outline: 2px solid var(--ncc-accent);
+      outline-offset: 2px;
+      border-color: var(--ncc-accent);
     }
     .choice-button:focus {
       outline: 2px solid var(--ncc-accent2);
@@ -422,20 +483,9 @@
       color: var(--ncc-bg);
     }
     select.choice-button {
-      background: var(--ncc-panel);
-      color: var(--ncc-accent);
-      border: 1.5px solid var(--ncc-accent);
-      font-weight: 600;
-      min-width: 110px;
-      padding: 0.22rem 0.6rem;
-      font-size: 0.97rem;
-      border-radius: var(--ncc-radius);
-      cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    select.choice-button:focus {
-      outline: 2px solid var(--ncc-accent2);
-      border-color: var(--ncc-accent2);
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
     }
     .aux-panel {
       min-width: 220px;
@@ -806,6 +856,279 @@
       opacity: 0.6;
     }
     /* End Main Menu Styles */
+
+    /* === Adjustments for Center Panel (Campaign Mode) === */
+
+    /* Reduce margins for elements in the central game area */
+    .game-board-panel .round-info,
+    .game-board-panel .round-multiplier,
+    .game-board-panel .deck,
+    .game-board-panel #drawnCards, /* Targeting ID if specific */
+    .game-board-panel #campaignChoiceAndBettingArea,
+    .game-board-panel #gameControls {
+      margin-top: 0.5rem;      /* Reduced top margin */
+      margin-bottom: 0.75rem;   /* Reduced bottom margin */
+    }
+
+    /* Allow round-info and round-multiplier to span wider */
+    .round-info, .round-multiplier {
+      max-width: 90%; /* Increase max-width to allow more horizontal space */
+      width: auto;      /* Allow it to size naturally up to max-width */
+      margin-left: auto;  /* Center it if it doesn't fill max-width */
+      margin-right: auto; /* Center it */
+    }
+
+    /* Specific adjustments for tighter spacing if still needed */
+    .game-board-panel .deck {
+      margin-bottom: 1rem; /* Slightly more space before drawn cards if needed */
+    }
+
+    #campaignChoiceAndBettingArea {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    #gameControls {
+      margin-top: 0.5rem;
+    }
+
+    /* If the drawn cards container needs specific height management */
+    #drawnCards {
+      min-height: 120px;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Run over summary specific styles */
+    .run-over-summary .campaign-stat-item {
+      /* ... existing code ... */
+    }
+
+    /* NEW: Style the suffix to look like the right part of the input field */
+    .bet-input-suffix {
+      display: inline-flex;
+      align-items: center;
+      padding-top: 0.7rem;
+      padding-bottom: 0.7rem;
+      padding-left: 0.5rem; /* Space between number and suffix text */
+      padding-right: 1rem;  /* Original right padding */
+      font-size: 1.2rem;    /* Match input */
+      font-family: var(--ncc-font); /* Match input */
+      background: var(--ncc-card); /* Match input */
+      color: var(--ncc-text2); /* Slightly dimmer for suffix text */
+      border: 2px solid var(--ncc-border); /* Match input */
+      border-left: none;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-top-right-radius: var(--ncc-radius);
+      border-bottom-right-radius: var(--ncc-radius);
+      white-space: nowrap;
+      box-shadow: var(--ncc-shadow); /* Match input's shadow */
+      line-height: normal; /* Match input */
+      transition: border-color 0.2s, box-shadow 0.2s; /* Added transition */
+    }
+
+    /* NEW: Update suffix appearance when input is focused */
+    .player-bet-row input[type="number"]:focus + .bet-input-suffix {
+      border-color: var(--ncc-accent2); /* Match focused input's border color */
+      box-shadow: 0 0 12px 0 var(--ncc-accent2), var(--ncc-shadow); /* Match focused input's shadow */
+    }
+
+    /* === Styles for Campaign Mode: Left Panel (Balatro Inspired) - REVISED === */
+
+    body.campaign-mode-active main {
+      grid-template-columns: 300px 2fr 1fr; /* Give left panel more fixed width */
+      /* Adjust gap/padding as needed if this makes center too cramped */
+    }
+
+    .campaign-mode-left-panel {
+      background-color: #0D0D17; /* Very dark background, like Balatro's left panel */
+      padding: 20px;
+      border-right: 3px solid var(--ncc-border); /* Stronger border */
+      box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+      color: var(--ncc-text);
+      display: flex;
+      flex-direction: column;
+      gap: 25px; /* Increased gap between stat blocks */
+      min-height: 80vh; /* Try to make it taller */
+    }
+
+    .balatro-stats-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 25px; /* Consistent gap */
+    }
+
+    .stat-block {
+      background-color: rgba(var(--ncc-panel-rgb), 0.7); /* Slightly transparent panel color */
+      border: 1px solid rgba(var(--ncc-border-rgb, var(--ncc-accent-rgb)), 0.5); /* Use border-rgb or accent-rgb if border-rgb not set*/
+      border-radius: var(--ncc-radius);
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .stat-block-label {
+      font-size: 0.9rem; /* Smaller label, similar to Balatro's "Round score", "Hands" */
+      font-weight: 700;
+      color: var(--ncc-text2); /* Subdued color for labels */
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px; /* Space between label and value */
+      border-bottom: 1px solid rgba(var(--ncc-text2-rgb, var(--ncc-text-rgb)), 0.3); /* Faint line under label */
+      padding-bottom: 5px;
+    }
+
+    .stat-block-value {
+      font-size: 1.8rem; /* Default large size for values */
+      font-weight: bold;
+      color: var(--ncc-text);
+      line-height: 1.2;
+      text-shadow: 0 0 5px rgba(var(--ncc-accent-rgb), 0.5);
+    }
+
+    /* CHIPS BLOCK - Special Styling */
+    .chips-block {
+      background: linear-gradient(145deg, rgba(var(--ncc-accent-rgb), 0.2), rgba(var(--ncc-panel-rgb), 0.9));
+      border: 2px solid var(--ncc-accent);
+      box-shadow: 0 0 15px rgba(var(--ncc-accent-rgb), 0.4), inset 0 0 10px rgba(var(--ncc-accent-rgb),0.2);
+      padding: 20px 15px; /* More padding for chips */
+    }
+    .chips-block .stat-block-label { /* "CHIPS" label */
+      font-size: 1.1rem; /* Larger than other labels */
+      color: var(--ncc-accent);
+      border-bottom-color: rgba(var(--ncc-accent-rgb), 0.6);
+    }
+    .chips-block .stat-block-value { /* The actual chip number */
+      font-size: 3.5rem; /* Significantly larger font size, like Balatro's score */
+      color: var(--ncc-accent); /* Bright accent color for the number */
+      font-weight: 900; /* Extra bold */
+      letter-spacing: -1px; /* Tighten spacing for large numbers */
+      line-height: 1.1;
+      text-shadow: 0 0 10px rgba(var(--ncc-accent-rgb),0.7), 0 0 20px rgba(var(--ncc-accent-rgb),0.4);
+      /* Add a subtle glow matching the accent */
+    }
+
+    /* QUOTA BLOCK & ATTEMPTS BLOCK */
+    .quota-block .stat-block-value,
+    .attempts-block .stat-block-value {
+      font-size: 2.2rem; /* Larger than default, smaller than chips */
+      color: var(--ncc-accent3); /* Use a secondary accent color */
+      text-shadow: 0 0 8px rgba(var(--ncc-accent3-rgb), 0.6);
+      margin-bottom: 10px; /* Add some space if a button is below */
+    }
+    .quota-block .stat-block-label,
+    .attempts-block .stat-block-label {
+        color: var(--ncc-text2); /* Consistent label color */
+    }
+
+    /* Style for the Complete Quota button inside the stat block */
+    .button-in-stat-block {
+        background-color: rgba(var(--ncc-accent3-rgb), 0.8);
+        color: var(--ncc-bg);
+        border: 1px solid var(--ncc-accent3);
+        border-radius: calc(var(--ncc-radius) - 4px); /* Slightly smaller radius */
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: block; /* Make it block to control width/margin easier */
+        width: calc(100% - 20px); /* Take most of the width, with some padding */
+        margin: 5px auto 0 auto; /* Centered with a little space above */
+        transition: background-color 0.2s, border-color 0.2s;
+        text-align: center;
+    }
+    .button-in-stat-block:hover:not(:disabled) {
+        background-color: var(--ncc-accent3);
+        border-color: rgba(var(--ncc-accent-rgb), 0.8);
+    }
+    .button-in-stat-block:disabled {
+        background-color: rgba(var(--ncc-text2-rgb, 128,128,128), 0.3);
+        color: var(--ncc-text2);
+        border-color: rgba(var(--ncc-text2-rgb, 128,128,128), 0.4);
+        cursor: not-allowed;
+    }
+
+    /* RUN INFO BLOCK */
+    .run-info-block {
+        text-align: left; /* Align text to left for this block */
+        padding: 15px 20px;
+    }
+    .run-info-block .stat-block-label { /* "RUN PROGRESS" label */
+      text-align: center; /* Center the main label for this block */
+    }
+    .run-info-item {
+      display: flex;
+      justify-content: space-between; /* Label on left, value on right */
+      font-size: 1.1rem; /* Slightly larger for readability */
+      margin-bottom: 8px;
+      padding: 5px 0;
+      border-bottom: 1px dashed rgba(var(--ncc-text2-rgb, var(--ncc-text-rgb)), 0.2);
+    }
+    .run-info-item:last-child {
+      margin-bottom: 0;
+      border-bottom: none;
+    }
+    .run-info-label {
+      color: var(--ncc-text2);
+      font-weight: 500;
+    }
+    .run-info-value {
+      color: var(--ncc-text);
+      font-weight: 700;
+    }
+    .run-info-value.profit-value { /* Specific styling for profit if needed */
+        color: var(--ncc-accent3); /* Greenish for profit */
+        text-shadow: 0 0 5px rgba(var(--ncc-accent3-rgb), 0.5);
+    }
+
+    /* Styling for the Run Over Summary in the left panel */
+    .run-over-summary .final-summary-block {
+        background-color: rgba(var(--ncc-error-rgb), 0.1); /* Subtle error background */
+        border: 2px solid var(--ncc-error);
+        padding: 20px;
+    }
+    .run-over-summary .stat-block-label {
+        color: var(--ncc-error);
+        font-size: 1.3rem;
+    }
+    .run-over-summary .run-info-item {
+        font-size: 1.2rem;
+    }
+     .run-over-summary .run-info-value.profit-value {
+        color: var(--ncc-text); /* Default text color for profit here unless you want it green */
+        text-shadow: none;
+    }
+    .run-over-summary .stat-block-message {
+        margin-top: 15px;
+        font-size: 1rem;
+        color: var(--ncc-text2);
+    }
+    /* === End of Campaign Mode: Left Panel (Balatro Inspired) - REVISED === */
+
+    /* === Deck Active/Inactive States === */
+    #deck {
+        /* Base transition for properties that change */
+        transition: box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, transform 0.2s ease;
+    }
+    .deck-active {
+        cursor: pointer;
+        border-color: var(--ncc-accent); /* Brighter border */
+        box-shadow: 0 0 20px 5px rgba(var(--ncc-accent-rgb), 0.7), /* More prominent glow */
+                    0 2px 10px 0 rgba(var(--ncc-accent-rgb),0.3); /* Existing base shadow type */
+        opacity: 1;
+    }
+    .deck-active:hover {
+        transform: translateY(-2px); /* Slight lift on hover */
+        box-shadow: 0 0 25px 8px rgba(var(--ncc-accent-rgb), 0.8), 
+                    0 4px 12px 0 rgba(var(--ncc-accent-rgb),0.4);
+    }
+    .deck-inactive {
+        cursor: not-allowed;
+        opacity: 0.65;
+        border-color: var(--ncc-text2); /* Dimmer border */
+        /* Optionally, reduce shadow for inactive state */
+        box-shadow: 0 0 10px 0 var(--ncc-text2), var(--ncc-shadow); 
+    }
   </style>
 </head>
 <body>
@@ -815,19 +1138,19 @@
   </div>
 
   <div id="mainMenuContainer">
-    <h1 class="menu-title">Ride the Bus</h1>
+    <h1 class="menu-title">Bus or Bust</h1>
     <div class="menu-options">
       <button id="playClassicButton" class="menu-button">Play Classic Mode</button>
-      <button id="playCampaignButton" class="menu-button">Play Campaign Mode (Soon)</button>
+      <button id="playCampaignButton" class="menu-button">Play Campaign Mode</button>
       <button id="optionsButton" class="menu-button" disabled>Options (Soon)</button>
     </div>
   </div>
 
-  <div id="gameViewContainer" style="display: none; min-height: 100vh;">
+  <div id="gameViewContainer" style="display: none; flex-direction: column; flex: 1;">
     <header>
-      <div class="game-title">Ride the Bus - Card Game</div>
+      <div class="game-title">Bus or Bust</div>
       <div class="header-controls">
-        <button id="backToMenuButton">Back to Menu</button>
+        <button id="backToMenuButton">Back to Main Menu</button>
         <button id="resetPlayersButton">Reset</button>
         <select id="themeSelector" class="header-theme-select">
           <option value="neon" style="background-color: #10101a; color: #00fff7;">Neon Glow</option>
@@ -849,12 +1172,21 @@
         <div class="round-info" id="roundInfo">Round info here</div>
         <div class="round-multiplier" id="roundMultiplier">Multiplier info here</div>
         <div class="deck" id="deck" data-count="0"></div>
-        <div class="drawn-cards" id="drawnCards"></div>
-        <div id="gameControls">
-          <button id="newGameButton">New Game (Classic)</button>
-          <button id="drawCardButton" class="draw-button">Draw Card</button>
-          <button id="completeQuotaButton" class="draw-button" style="display: none;">Complete Quota</button>
+        
+        <!-- New Central Stage for Campaign Mode -->
+        <div id="campaignCentralStage" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+          <div class="drawn-cards" id="drawnCards"></div>
+          <div id="campaignChoiceAndBettingArea" style="margin-top: 10px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; width: 100%;">
+              <!-- Bet input, choice buttons, cash-out button will be dynamically added here by JavaScript -->
+          </div>
+          <div id="gameControls">
+            <button id="newGameButton">New Game (Classic)</button>
+            <button id="drawCardButton" class="draw-button">Draw Card</button>
+            <button id="completeQuotaButton" class="draw-button" style="display: none;">Complete Quota</button>
+          </div>
         </div>
+        <!-- End New Central Stage -->
+
       </section>
       <aside class="panel aux-panel" id="auxPanel">
         <div class="aux-card" id="addPlayerCard">

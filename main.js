@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const playClassicButton = document.getElementById('playClassicButton');
     const playCampaignButton = document.getElementById('playCampaignButton');
     const backToMenuButton = document.getElementById('backToMenuButton');
+    const resetPlayersButton = document.getElementById('resetPlayersButton');
     
     const drawCardButton = document.getElementById('drawCardButton');
     const addPlayerCard = document.getElementById('addPlayerCard');
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupClassicMode() {
         activeGameMode = 'classic';
         console.log("Switched to Classic Mode");
+        document.body.classList.remove('campaign-mode-active'); // Ensure campaign class is removed
 
         if (addPlayerCard) addPlayerCard.style.display = 'flex';
         if (campaignStatusDisplay) campaignStatusDisplay.style.display = 'none';
@@ -61,6 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupCampaignMode() {
         activeGameMode = 'campaign';
         console.log("Switched to Campaign Mode");
+        document.body.classList.add('campaign-mode-active'); // Add campaign class to body
 
         if (addPlayerCard) addPlayerCard.style.display = 'none';
         if (campaignStatusDisplay) campaignStatusDisplay.style.display = 'block';
@@ -81,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
             gameViewContainer.style.display = 'flex';
             gameViewContainer.style.flexDirection = 'column';
             setupClassicMode();
+            if (resetPlayersButton) resetPlayersButton.style.display = '';
         });
 
         playCampaignButton.addEventListener('click', () => {
@@ -88,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
             gameViewContainer.style.display = 'flex';
             gameViewContainer.style.flexDirection = 'column';
             setupCampaignMode();
+            if (resetPlayersButton) resetPlayersButton.style.display = 'none';
         });
 
         backToMenuButton.addEventListener('click', () => {
@@ -110,9 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.warn("prepareCampaignModeForExit not found. Campaign state might persist.");
                 }
             }
+            if (resetPlayersButton) resetPlayersButton.style.display = 'none';
             activeGameMode = null;
             gameViewContainer.style.display = 'none';
             mainMenuContainer.style.display = 'flex';
+            document.body.classList.remove('campaign-mode-active'); // Clean up on back to menu
             if (drawCardButton) drawCardButton.onclick = null; // Clear listener
             if (addPlayerCard) addPlayerCard.style.display = 'flex'; // Default
             if (campaignStatusDisplay) campaignStatusDisplay.style.display = 'none'; // Default

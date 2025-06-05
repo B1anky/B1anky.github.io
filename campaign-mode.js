@@ -56,6 +56,30 @@ function initializeCampaignMode() {
         console.log("Resuming existing campaign session (state assumed persistent). Current Quota: ", currentQuota);
         updateCampaignUI(); 
     }
+
+    // Add click listener to the deck for drawing cards
+    const deckElement = document.getElementById('deck');
+    if (deckElement) {
+        deckElement.onclick = () => {
+            // Check if deck is effectively enabled before drawing
+            const canDraw = campaignPlayer.lastBet > 0 && 
+                            campaignPlayer.currentChoice !== undefined && 
+                            campaignPlayer.chips >= campaignPlayer.lastBet && 
+                            campaignGamePhase === PHASE_BETTING && 
+                            campaignRunActive && 
+                            campaignGameInProgress;
+            if (canDraw) {
+                campaignDrawCard();
+            } else {
+                console.log("[CMP] Deck clicked, but conditions to draw not met.");
+                // Optionally, provide feedback if deck is clicked when disabled, e.g., a shake animation or a brief message
+                // For now, it just won't do anything if conditions aren't met by campaignDrawCard()
+                // campaignDrawCard() itself has checks, but this prevents even calling it.
+            }
+        };
+    } else {
+        console.error("[CMP] Deck element not found for adding click listener.");
+    }
 }
 
 function startNewCampaignRun() {
@@ -71,7 +95,7 @@ function startNewCampaignRun() {
     currentQuota = baseInitialQuota;
     
     console.log(`New Run: Initial Quota: ${currentQuota}, Attempts for Quota: ${runAttemptsLeftForQuota}`);
-    showGameNotification(`New Campaign Run! Quota: ${currentQuota}. Attempts: ${runAttemptsLeftForQuota}. Starting Capital: ${baseStartingCapital}`, 'info', 5000);
+    // showGameNotification(`New Campaign Run! Quota: ${currentQuota}. Attempts: ${runAttemptsLeftForQuota}. Starting Capital: ${baseStartingCapital}`, 'info', 5000);
     
     campaignBetLockedForRide = false; // Reset on new run
     startNewAttemptForCurrentQuota();
@@ -88,7 +112,8 @@ function startNewAttemptForCurrentQuota() {
     campaignDrawnCards = [];
     campaignGamePhase = PHASE_BETTING;
     campaignGameInProgress = true; 
-    campaignPlayer.lastBet = campaignPlayer.chips > 0 ? 1 : 0;
+    // Set lastBet: Use previous ride's bet if affordable, else 1 (if chips > 0), else 0.
+    campaignPlayer.lastBet = campaignPreviousRideBet > 0 && campaignPreviousRideBet <= campaignPlayer.chips ? campaignPreviousRideBet : (campaignPlayer.chips > 0 ? 1 : 0);
     campaignPlayer.currentChoice = undefined;
     console.log(`[CMP] Full Attempt Started. Chips: ${campaignPlayer.chips}. Initial Bet: ${campaignPlayer.lastBet}.`);
     updateCampaignUI();
@@ -108,10 +133,9 @@ function startNewRideSequence() {
     campaignDrawnCards = [];
     campaignGamePhase = PHASE_BETTING;
     campaignGameInProgress = true; 
-    campaignPlayer.lastBet = campaignPlayer.chips > 0 ? 1 : 0; 
+    campaignPlayer.lastBet = campaignPreviousRideBet > 0 && campaignPreviousRideBet <= campaignPlayer.chips ? campaignPreviousRideBet : (campaignPlayer.chips > 0 ? 1 : 0); 
     campaignPlayer.currentChoice = undefined;
-    showGameNotification(`Starting new Ride the Bus sequence. Chips: ${campaignPlayer.chips}. Attempts left: ${runAttemptsLeftForQuota}.`, 'info', 3500);
-    updateCampaignUI();
+    updateCampaignUI(); // This will call updateDeckClickableState()
 }
 
 // --- UI UPDATES (Campaign Specific) ---
@@ -119,15 +143,10 @@ function updateCampaignUI() {
     console.log("Updating Campaign UI...");
     const campaignStatusDisp = document.getElementById('campaignStatusDisplay');
     if (campaignStatusDisp) {
-        campaignStatusDisp.style.display = 'block';
-        let statusText = `Run Profit: ${currentRunProfit} | Quota: ${currentQuota} | Chips: ${campaignPlayer.chips} | Attempts for Quota: ${runAttemptsLeftForQuota}`;
+        campaignStatusDisp.style.display = 'none';
         if (!campaignRunActive) {
-             statusText = `Run Over! Final Profit: ${currentRunProfit}. Games Cleared: ${gamesPlayedInRun}.`;
-        } else if (campaignGamePhase === PHASE_GAME_OVER && campaignGameInProgress === false) {
-            // This state occurs after a bust or player chooses to check quota, before next attempt/level or run end.
-            statusText += ` | Sequence Ended.`; 
+            // Potentially use for a run over message
         }
-        campaignStatusDisp.textContent = statusText;
     }
     updateCampaignPlayerDisplay();
     updateCampaignRoundInfo();
@@ -135,44 +154,102 @@ function updateCampaignUI() {
     updateCampaignDeckDisplay();
     updateCampaignDrawnCardsDisplay();
     updateCampaignDebugDisplay(); 
+    updateDeckClickableState(); // ADDED
 }
 
 function updateCampaignPlayerDisplay() {
     console.log("[CMP] updateCampaignPlayerDisplay: CALLED");
-    const playerArea = document.getElementById('campaignPlayersPanel');
-    if (!playerArea) {
+
+    const playerInfoPanel = document.getElementById('campaignPlayersPanel');
+    if (!playerInfoPanel) {
         console.error("[CMP] updateCampaignPlayerDisplay: ERROR - campaignPlayersPanel element NOT FOUND!");
+    } else {
+        playerInfoPanel.innerHTML = ''; 
+        playerInfoPanel.style.display = 'flex'; 
+        playerInfoPanel.style.flexDirection = 'column';
+        playerInfoPanel.className = 'panel players-panel campaign-mode-left-panel';
+
+        if (campaignRunActive) {
+            const balatroStatsWrapper = document.createElement('div');
+            balatroStatsWrapper.className = 'balatro-stats-wrapper';
+
+            const chipsBlock = document.createElement('div');
+            chipsBlock.className = 'stat-block chips-block';
+            chipsBlock.innerHTML = `
+                <div class="stat-block-label">CHIPS</div>
+                <div class="stat-block-value">${campaignPlayer.chips}</div>
+            `;
+            balatroStatsWrapper.appendChild(chipsBlock);
+
+            const quotaBlock = document.createElement('div');
+            quotaBlock.className = 'stat-block quota-block';
+            quotaBlock.innerHTML = `
+                <div class="stat-block-label">TARGET QUOTA</div>
+                <div class="stat-block-value">${currentQuota}</div>
+            `;
+            // Create and append Complete Quota button here
+            const completeQuotaButton = document.createElement('button');
+            completeQuotaButton.id = 'completeQuotaButton';
+            completeQuotaButton.className = 'button-in-stat-block'; // New class for styling
+            completeQuotaButton.textContent = 'Complete Quota'; // Simplified text
+            completeQuotaButton.onclick = () => playerCompletesQuota(); // Ensure onclick is set
+            quotaBlock.appendChild(completeQuotaButton);
+            balatroStatsWrapper.appendChild(quotaBlock);
+
+            const attemptsBlock = document.createElement('div');
+            attemptsBlock.className = 'stat-block attempts-block';
+            attemptsBlock.innerHTML = `
+                <div class="stat-block-label">ATTEMPTS LEFT</div>
+                <div class="stat-block-value">${runAttemptsLeftForQuota} / ${ATTEMPTS_PER_QUOTA_LEVEL}</div>
+            `;
+            balatroStatsWrapper.appendChild(attemptsBlock);
+            
+            const runInfoBlock = document.createElement('div');
+            runInfoBlock.className = 'stat-block run-info-block';
+            runInfoBlock.innerHTML = `
+                <div class="stat-block-label">RUN PROGRESS</div>
+                <div class="run-info-item"><span class="run-info-label">Profit:</span> <span class="run-info-value profit-value">${currentRunProfit}</span></div>
+                <div class="run-info-item"><span class="run-info-label">Quotas Cleared:</span> <span class="run-info-value">${gamesPlayedInRun}</span></div>
+            `;
+            balatroStatsWrapper.appendChild(runInfoBlock);
+
+            playerInfoPanel.appendChild(balatroStatsWrapper);
+
+        } else { // Run is not active, display summary
+            const runOverSummary = document.createElement('div');
+            runOverSummary.className = 'balatro-stats-wrapper run-over-summary'; // Reuse wrapper for consistency
+            runOverSummary.innerHTML = `
+                <div class="stat-block final-summary-block">
+                    <div class="stat-block-label">CAMPAIGN OVER</div>
+                    <div class="run-info-item"><span class="run-info-label">Final Profit:</span> <span class="run-info-value profit-value">${currentRunProfit}</span></div>
+                    <div class="run-info-item"><span class="run-info-label">Quotas Cleared:</span> <span class="run-info-value">${gamesPlayedInRun}</span></div>
+                    <div class="stat-block-message">Return to Main Menu to start a new run.</div>
+                </div>
+            `;
+            playerInfoPanel.appendChild(runOverSummary);
+        }
+    }
+
+    const interactiveControlsContainer = document.getElementById('campaignChoiceAndBettingArea');
+    if (!interactiveControlsContainer) {
+        console.error("[CMP] updateCampaignPlayerDisplay: ERROR - campaignChoiceAndBettingArea element NOT FOUND!");
         return;
     }
-    playerArea.innerHTML = ''; // Clear for fresh render
-    // Basic styling to ensure visibility
-    playerArea.style.display = 'flex'; 
-    playerArea.style.flexDirection = 'column'; 
+    interactiveControlsContainer.innerHTML = ''; // Clear for fresh render
 
     if (!campaignRunActive || !campaignGameInProgress) {
-        console.log("[CMP] updateCampaignPlayerDisplay: Run not active or game not in progress. No player controls to show.");
-        // Optionally display a message in playerArea if desired
-        // playerArea.textContent = "Campaign game sequence not active.";
+        console.log("[CMP] updateCampaignPlayerDisplay: Run not active or game not in progress. No interactive controls to show in campaignChoiceAndBettingArea.");
         return;
     }
 
-    const playerDiv = document.createElement('div');
-    playerDiv.className = 'player-controls';
+    // The rest of the function will now build controls (bet input, choices, cash out)
+    // and append them to 'interactiveControlsContainer' instead of 'playerArea' or 'playerDiv' that was part of 'playerArea'.
 
-    const headerRow = document.createElement('div');
-    headerRow.className = 'player-header-row';
-    const nameDiv = document.createElement('div');
-    nameDiv.className = 'player-name';
-    nameDiv.textContent = campaignPlayer.name;
-    const chipsDiv = document.createElement('div');
-    chipsDiv.className = 'player-chips';
-    chipsDiv.textContent = `Chips: ${campaignPlayer.chips}`;
-    headerRow.appendChild(nameDiv);
-    headerRow.appendChild(chipsDiv);
-    playerDiv.appendChild(headerRow);
+    const controlsDiv = document.createElement('div'); // This will hold bet, choices, etc.
+    controlsDiv.className = 'player-interactive-controls'; // New class for styling this group
 
     const betRow = document.createElement('div');
-    betRow.className = 'player-bet-row';
+    betRow.className = 'player-bet-row'; // Keep class for styling
     const betInput = document.createElement('input');
     betInput.type = 'number';
     betInput.id = `betInput_campaign`;
@@ -190,21 +267,16 @@ function updateCampaignPlayerDisplay() {
         let correctedBetValue = false;
         if (newBet > campaignPlayer.chips) {
             newBet = campaignPlayer.chips;
-            betInput.value = newBet; // Correct visual input immediately
+            betInput.value = newBet; 
             correctedBetValue = true;
-            // Avoid spamming notifications if user is just holding down backspace or typing beyond limit
-            // This simple check might still notify frequently, could be improved with a debounce if still an issue.
             if (String(newBet) !== newBetTyped && newBetTyped !== "") { 
                  showGameNotification("Bet cannot exceed current capital. Bet adjusted.", 'warning', 2000);
             }
         }
 
-        // If the string value in the input is not a clean number (e.g., "100a" or empty after backspace)
-        // ensure newBet reflects the parsed number and input field visually matches newBet.
         if (String(newBet) !== newBetTyped) {
-            // Exception: if newBetTyped is empty, newBet is 0. Don't force "0" into the field if user is clearing it.
             if (newBetTyped !== "") { 
-                betInput.value = newBet; // Corrects "100a" to "100"
+                betInput.value = newBet; 
                 correctedBetValue = true;
             }
         }
@@ -213,13 +285,13 @@ function updateCampaignPlayerDisplay() {
             campaignPlayer.lastBet = newBet;
             console.log(`[CMP] Bet input changed (oninput). New campaignPlayer.lastBet: ${campaignPlayer.lastBet}`);
             
-            updateCampaignGameButtons(); // Update draw button state, etc.
+            updateCampaignGameButtons(); 
+            updateDeckClickableState(); // ADDED: Update deck state when bet changes
 
-            // Dynamically update the Cash Out Mid-Ride button text and visibility
-            const cashOutRow = document.getElementById('campaignCashOutRow');
-            const cashOutButton = document.getElementById('campaignCashOutButton');
+            const cashOutRowEl = document.getElementById('campaignCashOutRow'); // Use existing ID if created by this function
+            const cashOutButtonEl = document.getElementById('campaignCashOutButton'); // Use existing ID
 
-            if (cashOutRow && cashOutButton) {
+            if (cashOutRowEl && cashOutButtonEl) {
                 const 조건_canCashOut = campaignGamePhase === PHASE_BETTING && 
                                    campaignCurrentRound > 1 && 
                                    campaignCurrentRound <= 5 && 
@@ -228,14 +300,13 @@ function updateCampaignPlayerDisplay() {
                 if (조건_canCashOut) {
                     const cashOutMultiplier = campaignRunRoundMultipliers[campaignCurrentRound - 1] || BASE_ROUND_MULTIPLIERS[campaignCurrentRound - 1];
                     const potentialCashOutValue = campaignPlayer.lastBet * cashOutMultiplier;
-                    cashOutButton.textContent = `Cash Out (R${campaignCurrentRound - 1} Win: ${potentialCashOutValue} chips)`;
-                    cashOutRow.style.display = 'flex'; 
+                    cashOutButtonEl.textContent = `Cash Out [+${potentialCashOutValue} chips] [-1 Attempt]`;
+                    cashOutRowEl.style.display = 'flex'; 
                 } else {
-                    cashOutRow.style.display = 'none';
+                    cashOutRowEl.style.display = 'none';
                 }
             }
         } 
-        // No full updateCampaignUI() or updateCampaignPlayerDisplay() here to preserve focus
     };
 
     if (campaignPlayer.chips <= 0 && campaignGamePhase !== PHASE_PLAYING) {
@@ -243,31 +314,20 @@ function updateCampaignPlayerDisplay() {
         betInput.value = 0;
     }
 
-    betRow.appendChild(betInput); // Add input first
+    betRow.appendChild(betInput);
 
-    // Add "Use Last Bet" button to the right of the input
-    if (!campaignBetLockedForRide && campaignPreviousRideBet > 0 && campaignPlayer.chips >= campaignPreviousRideBet) {
-        const useLastBetButton = document.createElement('button');
-        useLastBetButton.textContent = `Use Last Bet (${campaignPreviousRideBet})`;
-        useLastBetButton.className = 'use-last-bet-button'; 
-        useLastBetButton.style.marginLeft = '5px'; // Keep some margin
-        useLastBetButton.onclick = () => {
-            if (!campaignBetLockedForRide && campaignPlayer.chips >= campaignPreviousRideBet) {
-                campaignPlayer.lastBet = campaignPreviousRideBet;
-                betInput.value = campaignPlayer.lastBet; 
-                updateCampaignPlayerDisplay(); 
-            }
-        };
-        betRow.appendChild(useLastBetButton); // Append after input
-    }
-    playerDiv.appendChild(betRow);
+    // Create a span for the " chips" suffix
+    const chipsSuffix = document.createElement('span');
+    chipsSuffix.className = 'bet-input-suffix';
+    chipsSuffix.textContent = ' chips';
+    betRow.appendChild(chipsSuffix);
+
+    interactiveControlsContainer.appendChild(betRow); // Append betRow to the new container
 
     const choiceButtonsContainer = document.createElement('div');
-    choiceButtonsContainer.className = 'choice-buttons';
+    choiceButtonsContainer.className = 'choice-buttons'; // Keep class for styling
     let choices = [];
 
-    // Choices are relevant only if in betting phase and player has >0 chips and has placed a bet
-    // Or if in PHASE_PLAYING and it's a round that requires a subsequent choice (not really in this model anymore)
     const canMakeChoice = campaignGamePhase === PHASE_BETTING && campaignPlayer.chips > 0 && campaignPlayer.lastBet > 0;
 
     if (canMakeChoice) {
@@ -293,14 +353,14 @@ function updateCampaignPlayerDisplay() {
                 if (campaignPlayer.currentChoice) valueSelect.value = campaignPlayer.currentChoice;
                 valueSelect.onchange = function() { if (this.value) makeCampaignChoice(this.value); };
                 choiceButtonsContainer.appendChild(valueSelect);
-                choices = []; // Prevent standard button generation for R5
+                choices = []; 
                 break;
             default: choices = []; break;
         }
 
         choices.forEach(choiceText => {
             const button = document.createElement('button');
-            button.className = 'choice-button';
+            button.className = 'choice-button'; // This class will be styled for larger buttons
             button.textContent = choiceText.charAt(0).toUpperCase() + choiceText.slice(1);
             button.onclick = () => makeCampaignChoice(choiceText);
             if (campaignPlayer.currentChoice && choiceText.toLowerCase() === campaignPlayer.currentChoice.toLowerCase()) {
@@ -310,41 +370,35 @@ function updateCampaignPlayerDisplay() {
         });
     }
 
-    // Add Cash Out Mid-Ride button if applicable
-    // This section now primarily handles the INITIAL creation and visibility.
-    // The oninput handler above will manage dynamic updates to text/visibility based on bet changes.
     const canShowCashOutInitially = campaignGamePhase === PHASE_BETTING && campaignCurrentRound > 1 && campaignCurrentRound <= 5 && campaignPlayer.lastBet > 0;
     
     const cashOutRow = document.createElement('div');
-    cashOutRow.id = 'campaignCashOutRow'; // Assign ID
-    cashOutRow.style.marginTop = '10px';
-    cashOutRow.style.display = canShowCashOutInitially ? 'flex' : 'none'; // Initial visibility
+    cashOutRow.id = 'campaignCashOutRow'; 
+    cashOutRow.style.marginTop = '5px';
+    cashOutRow.style.display = canShowCashOutInitially ? 'flex' : 'none'; 
     cashOutRow.style.justifyContent = 'center';
 
     const cashOutButton = document.createElement('button');
-    cashOutButton.id = 'campaignCashOutButton'; // Assign ID
-    cashOutButton.className = 'draw-button cash-out-mid-ride'; 
-    cashOutButton.style.padding = '0.5rem 1rem'; 
-    cashOutButton.style.fontSize = '1rem'; 
+    cashOutButton.id = 'campaignCashOutButton'; 
+    cashOutButton.className = 'draw-button cash-out-mid-ride'; // Use existing classes, can be restyled
     cashOutButton.onclick = () => handleCashOutMidRide();
     
     if (canShowCashOutInitially) {
         const cashOutMultiplier = campaignRunRoundMultipliers[campaignCurrentRound - 1] || BASE_ROUND_MULTIPLIERS[campaignCurrentRound - 1];
         const potentialCashOutValue = campaignPlayer.lastBet * cashOutMultiplier;
-        cashOutButton.textContent = `Cash Out (R${campaignCurrentRound - 1} Win: ${potentialCashOutValue} chips)`;
+        cashOutButton.textContent = `Cash Out [+${potentialCashOutValue} chips] [-1 Attempt]`;
     } else {
-        cashOutButton.textContent = "Cash Out"; // Default or placeholder text when hidden
+        cashOutButton.textContent = "Cash Out"; 
     }
 
     cashOutRow.appendChild(cashOutButton);
-    playerDiv.appendChild(cashOutRow); 
-
+    // Append cashOutRow and choiceButtonsContainer to the new interactiveControlsContainer
     if (choiceButtonsContainer.hasChildNodes()) {
-        playerDiv.appendChild(choiceButtonsContainer);
+        interactiveControlsContainer.appendChild(choiceButtonsContainer);
     }
+    interactiveControlsContainer.appendChild(cashOutRow); 
 
-    playerArea.appendChild(playerDiv);
-    console.log("[CMP] updateCampaignPlayerDisplay: Player controls updated.");
+    console.log("[CMP] updateCampaignPlayerDisplay: Interactive controls updated in campaignChoiceAndBettingArea.");
 }
 
 function makeCampaignChoice(choice) {
@@ -355,7 +409,7 @@ function makeCampaignChoice(choice) {
     }
     campaignPlayer.currentChoice = choice;
     console.log(`[CMP] makeCampaignChoice: Choice made: "${choice}".`);
-    updateCampaignUI(); // Update UI to reflect choice (e.g., button selection, enable draw button)
+    updateCampaignUI(); // This will call updateDeckClickableState()
 }
 
 function updateCampaignRoundInfo() {
@@ -370,42 +424,52 @@ function updateCampaignRoundInfo() {
         return;
     }
     if (!campaignGameInProgress && campaignRunActive) {
-        // This state is after a bust/quota attempt, before next attempt or if run ended by failing last attempt
         roundInfoEl.textContent = `Sequence ended. Waiting for next action.`;
-        multiplierInfoEl.textContent = `Attempts for Quota ${currentQuota}: ${runAttemptsLeftForQuota}. Chips: ${campaignPlayer.chips}`; 
+        multiplierInfoEl.textContent = `Attempts for Quota ${currentQuota}: ${runAttemptsLeftForQuota}. Chips: ${campaignPlayer.chips}`;
         return;
     }
 
-    // If campaignGameInProgress is true:
     let roundText = `Round ${campaignCurrentRound}: `;
     let multText = `(Current Bet: ${campaignPlayer.lastBet}) `;
 
     if (campaignGamePhase === PHASE_BETTING) {
-        roundText += `Place Bet & Choose for R${campaignCurrentRound}.`;
-         if (campaignPlayer.chips <= 0) {
-             multText = `No capital to bet! This attempt is over.`; // This case should be handled by bust logic primarily
-        } else if (campaignPlayer.lastBet > 0 && !campaignPlayer.currentChoice) {
-            multText = `Waiting for choice for R${campaignCurrentRound}.`;
-        } else if (campaignPlayer.lastBet > 0 && campaignPlayer.currentChoice) {
-            multText = 'Ready to Draw!';
-        } else {
-            multText = `Chips: ${campaignPlayer.chips}. Min Bet: 1.`;
+        // Determine round-specific question text first
+        switch (campaignCurrentRound) {
+            case 1: roundText += 'Will the next card be a red or black suit?'; break;
+            case 2: roundText += 'Higher or Lower than the previous card?'; break; // Example, adjust as per your game rules
+            case 3: roundText += 'Inside or Outside the first two cards?'; break; // Example
+            case 4: roundText += 'Guess the Suit of the next card.'; break;       // Example
+            case 5: roundText += 'Guess the Value of the next card.'; break;      // Example
+            default: roundText += `Place Bet & Choose for R${campaignCurrentRound}.`; break;
         }
-    } else if (campaignGamePhase === PHASE_PLAYING) { // Technically, after drawing, it goes back to BETTING for next choice/round
-        // This phase is very brief, mainly during card draw animation.
-        // The important info is current round being played.
+
+        // Determine multText based on game state
+        if (campaignPlayer.lastBet <= 0) {
+            multText = "Waiting for player choice and bet.";
+        } else if (!campaignPlayer.currentChoice) {
+            multText = "Waiting for player choice.";
+        } else { // Bet is > 0 and choice is made
+            multText = 'Ready to Draw!';
+        }
+         // This specific condition for no capital might override the above if chips are truly 0
+         if (campaignPlayer.chips <= 0 && campaignPlayer.lastBet <=0) { 
+            multText = `No capital to bet! This attempt is over.`;
+        }
+
+    } else if (campaignGamePhase === PHASE_PLAYING) { 
         roundText += `Playing Round ${campaignCurrentRound}...`;
         multText = `Bet was ${campaignPlayer.lastBet}.`;
+        // Update roundInfoEl directly here for playing phase to show the R1 question correctly during play
+        switch (campaignCurrentRound) {
+            case 1: roundInfoEl.textContent = `Round ${campaignCurrentRound}: Will the next card be a red or black suit?`; break;
+            // Add other cases if their text during PHASE_PLAYING needs to be specific
+            default: roundInfoEl.textContent = roundText; break;
+        }
     }
     
-    // Round-specific instructions are clearer with choices in player display
-    switch (campaignCurrentRound) {
-        case 1: roundInfoEl.textContent = roundText + (campaignGamePhase === PHASE_BETTING ? 'Red or Black?' : ''); break;
-        case 2: roundInfoEl.textContent = roundText + (campaignGamePhase === PHASE_BETTING ? 'Higher or Lower?' : ''); break;
-        case 3: roundInfoEl.textContent = roundText + (campaignGamePhase === PHASE_BETTING ? 'Inside or Outside?' : ''); break;
-        case 4: roundInfoEl.textContent = roundText + (campaignGamePhase === PHASE_BETTING ? 'Guess the Suit' : ''); break;
-        case 5: roundInfoEl.textContent = roundText + (campaignGamePhase === PHASE_BETTING ? 'Guess Value' : ''); break;
-        default: roundInfoEl.textContent = roundText; break;
+    // Set roundInfoEl text, except if already set in PHASE_PLAYING block
+    if (campaignGamePhase !== PHASE_PLAYING) {
+        roundInfoEl.textContent = roundText;
     }
     multiplierInfoEl.textContent = multText;
 }
@@ -414,39 +478,33 @@ function updateCampaignGameButtons() {
     console.log("updateCampaignGameButtons called");
     const newGameButton = document.getElementById('newGameButton'); 
     const drawCardButton = document.getElementById('drawCardButton');
-    const completeQuotaButton = document.getElementById('completeQuotaButton'); // Changed ID
+    const completeQuotaButtonEl = document.getElementById('completeQuotaButton'); // Renamed for clarity
 
-    if (!drawCardButton || !completeQuotaButton) {
-        console.error("[CMP] Game buttons (drawCardButton or completeQuotaButton) not found!");
-        if(newGameButton) newGameButton.style.display = 'none';
-        return;
-    }
-
+    // Hide newGameButton in campaign mode (already default behavior, but good to be explicit)
     if (newGameButton) newGameButton.style.display = 'none';
 
     if (!campaignRunActive) {
-        drawCardButton.style.display = 'none';
-        completeQuotaButton.style.display = 'none';
+        if(drawCardButton) drawCardButton.style.display = 'none';
+        if(completeQuotaButtonEl) completeQuotaButtonEl.style.display = 'none'; // Hide if run not active
         return;
     }
 
     if (campaignGameInProgress) {
-        drawCardButton.style.display = '';
-        completeQuotaButton.style.display = '';
-
-        drawCardButton.textContent = `Draw for Round ${campaignCurrentRound}`;
-        drawCardButton.disabled = !(campaignPlayer.lastBet > 0 && campaignPlayer.currentChoice !== undefined && campaignPlayer.chips >= campaignPlayer.lastBet && campaignGamePhase === PHASE_BETTING);
+        // Permanently hide the original drawCardButton in Campaign mode
+        if(drawCardButton) drawCardButton.style.display = 'none'; 
         
-        completeQuotaButton.textContent = `Complete Quota (${currentQuota})`;
-        completeQuotaButton.disabled = !(campaignPlayer.chips >= currentQuota); // Enabled only if chips meet/exceed quota
-        
-        // Apply similar styling to drawCardButton if desired (assuming they share a common class or need specific styles)
-        // For example, if they both use a class like 'game-action-button' that could be styled in CSS.
-        // If not, ensure 'completeQuotaButton' has appropriate styles applied in CSS or here.
+        // Manage Complete Quota button (which is now in the left panel)
+        if (completeQuotaButtonEl) {
+            completeQuotaButtonEl.style.display = ''; // Show it if game is in progress
+            // Text is now set in updateCampaignPlayerDisplay, no need to set here
+            completeQuotaButtonEl.disabled = !(campaignPlayer.chips >= currentQuota); 
+        } else {
+            console.error("[CMP] completeQuotaButton element not found in updateCampaignGameButtons!");
+        }
 
-    } else {
-        drawCardButton.style.display = 'none'; 
-        completeQuotaButton.style.display = 'none'; 
+    } else { // Campaign game not in progress (e.g., between rides, or before first attempt)
+        if(drawCardButton) drawCardButton.style.display = 'none'; 
+        if(completeQuotaButtonEl) completeQuotaButtonEl.style.display = 'none'; 
     }
 }
 
@@ -502,29 +560,51 @@ function updateCampaignDebugDisplay() {
     }
 }
 
+// NEW FUNCTION to manage deck's clickable state and appearance
+function updateDeckClickableState() {
+    const deckElement = document.getElementById('deck');
+    if (!deckElement) return;
+
+    const canDraw = campaignPlayer.lastBet > 0 && 
+                    campaignPlayer.currentChoice !== undefined && 
+                    campaignPlayer.chips >= campaignPlayer.lastBet && 
+                    campaignGamePhase === PHASE_BETTING && 
+                    campaignRunActive && 
+                    campaignGameInProgress;
+
+    if (canDraw) {
+        deckElement.classList.add('deck-active');
+        deckElement.classList.remove('deck-inactive');
+        deckElement.style.cursor = 'pointer';
+    } else {
+        deckElement.classList.add('deck-inactive');
+        deckElement.classList.remove('deck-active');
+        deckElement.style.cursor = 'not-allowed';
+    }
+}
+
 // --- GAME LOGIC (Campaign Specific) ---
 async function campaignDrawCard() {
     if (!campaignRunActive || !campaignGameInProgress) {
-        showGameNotification("No active campaign game to draw card for.", "warning");
+        // showGameNotification("No active campaign game to draw card for.", "warning"); // Potentially keep for debugging, or remove
         return;
     }
     if (campaignPlayer.lastBet <= 0 || !campaignPlayer.currentChoice) {
-        showGameNotification('Place a valid bet and make a choice before drawing.', 'warning');
+        // showGameNotification('Place a valid bet and make a choice before drawing.', 'warning'); // Potentially keep
         return;
     }
     if (campaignPlayer.chips < campaignPlayer.lastBet) {
-        showGameNotification(`Not enough chips (${campaignPlayer.chips}) for bet (${campaignPlayer.lastBet}). Lower your bet.`, 'warning');
+        // showGameNotification(`Not enough chips (${campaignPlayer.chips}) for bet (${campaignPlayer.lastBet}). Lower your bet.`, 'warning'); // Potentially keep
         return;
     }
 
-    // Lock the bet if this is the first card of a new ride sequence (R1, betting phase)
     if (campaignCurrentRound === 1 && campaignGamePhase === PHASE_BETTING) {
         if (campaignPlayer.lastBet > 0 && campaignPlayer.chips >= campaignPlayer.lastBet) {
             campaignBetLockedForRide = true;
             console.log(`[CMP] campaignDrawCard: Bet of ${campaignPlayer.lastBet} for R1 locked. campaignBetLockedForRide = true`);
         } else {
-            showGameNotification('Cannot lock bet. Invalid bet amount or insufficient chips for R1.', 'error');
-            return; // Don't proceed if bet can't be locked
+            showGameNotification('Cannot lock bet. Invalid bet amount or insufficient chips for R1.', 'error'); // Keep critical error
+            return; 
         }
     }
 
@@ -608,28 +688,28 @@ function campaignProcessRoundResults(drawnCard) {
     }
 
     campaignGameInProgress = false; 
-    let rideEndingBet = campaignPlayer.lastBet; // Capture the bet of the ride that's ending
+    let rideEndingBet = campaignPlayer.lastBet;
 
     if (playerWinsThisRound) {
-        showGameNotification(`Won Round ${campaignCurrentRound}!`, 'success', 2000);
+        // showGameNotification(`Won Round ${campaignCurrentRound}!`, 'success', 2000);
         if (campaignCurrentRound === 5) { 
             const multiplier = campaignRunRoundMultipliers[5] || BASE_ROUND_MULTIPLIERS[5];
             const winnings = campaignPlayer.lastBet * multiplier; 
             campaignPlayer.chips += winnings; 
             console.log(`[CMP] R5 WIN! Initial Bet: ${campaignPlayer.lastBet}, Multiplier: ${multiplier}, Total Added: ${winnings}. Final Chips: ${campaignPlayer.chips}`);
-            showGameNotification(`SUCCESS! Rode the Bus! Chips: ${campaignPlayer.chips}.`, 'success', 4000);
+            // showGameNotification(`SUCCESS! Rode the Bus! Chips: ${campaignPlayer.chips}.`, 'success', 4000); // R5 win summary
             if (rideEndingBet > 0) campaignPreviousRideBet = rideEndingBet;
             runAttemptsLeftForQuota--;
             console.log(`[CMP] R5 Win sequence ended. Attempt consumed. Attempts left: ${runAttemptsLeftForQuota}`);
             if (runAttemptsLeftForQuota > 0) {
-                showGameNotification("Ride complete! Starting new Ride sequence...", "info", 1800);
+                // showGameNotification("Ride complete! Starting new Ride sequence...", "info", 1800);
                 setTimeout(() => { startNewRideSequence(); }, 2000); 
             } else {
                 if (campaignPlayer.chips >= currentQuota) {
-                    showGameNotification(`R5 Win on last attempt and MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000);
+                    showGameNotification(`R5 Win on last attempt and MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000); // Keep major event
                     processSuccessfulQuotaCompletion("R5 Win - Last Attempt");
                 } else {
-                    showGameNotification(`Run Over. R5 Win on last attempt but FAILED QUOTA of ${currentQuota}. Chips: ${campaignPlayer.chips}.`, 'error', 8000);
+                    showGameNotification(`Run Over. R5 Win on last attempt but FAILED QUOTA of ${currentQuota}. Chips: ${campaignPlayer.chips}.`, 'error', 8000); // Keep major event
                     campaignRunActive = false;
                     updateCampaignUI();
                 }
@@ -645,7 +725,7 @@ function campaignProcessRoundResults(drawnCard) {
             updateCampaignUI(); 
         }
     } else { // Player Lost Round (Incorrect Guess)
-        showGameNotification(`Lost Round ${campaignCurrentRound}. Bet of ${campaignPlayer.lastBet} lost. Chips: ${campaignPlayer.chips}`, 'warning', 3000); 
+        // showGameNotification(`Lost Round ${campaignCurrentRound}. Bet of ${campaignPlayer.lastBet} lost. Chips: ${campaignPlayer.chips}`, 'warning', 3000); 
         console.log(`[CMP] Lost R${campaignCurrentRound}. Bet: ${campaignPlayer.lastBet}. Chips after loss: ${campaignPlayer.chips}.`);
 
         if (campaignPlayer.chips <= 0) {
@@ -659,16 +739,16 @@ function campaignProcessRoundResults(drawnCard) {
         console.log(`[CMP] Incorrect guess. Attempt consumed. Attempts left: ${runAttemptsLeftForQuota}`);
         
         if (runAttemptsLeftForQuota > 0) {
-            showGameNotification(`Incorrect guess. Attempt lost. Starting new Ride sequence in 2s... Chips: ${campaignPlayer.chips}`, 'warning', 2000); 
+            // showGameNotification(`Incorrect guess. Attempt lost. Starting new Ride sequence in 2s... Chips: ${campaignPlayer.chips}`, 'warning', 2000); 
             setTimeout(() => { 
                 startNewRideSequence(); 
             }, 2000); 
         } else {
             if (campaignPlayer.chips >= currentQuota) {
-                showGameNotification(`Lost round on last attempt but MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000);
+                //showGameNotification(`Lost round on last attempt but MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000); // Keep major event
                 processSuccessfulQuotaCompletion("Lost Round - Last Attempt");
             } else {
-                showGameNotification(`Run Over. Lost round on last attempt and FAILED QUOTA of ${currentQuota}. Chips: ${campaignPlayer.chips}.`, 'error', 8000);
+                //showGameNotification(`Run Over. Lost round on last attempt and FAILED QUOTA of ${currentQuota}. Chips: ${campaignPlayer.chips}.`, 'error', 8000); // Keep major event
                 campaignRunActive = false;
                 updateCampaignUI();
             }
@@ -683,36 +763,36 @@ function campaignProcessRoundResults(drawnCard) {
 
 function handleBust() {
     if (!campaignRunActive) return; 
-    showGameNotification(`BUSTED! Chips at or below 0. Campaign Run Over!`, 'error', 7000);
+    showGameNotification(`BUSTED! Chips at or below 0. Campaign Run Over!`, 'error', 7000); // Keep - CRITICAL
     console.log("[CMP] handleBust: Player busted. Campaign Run IMMEDIATELY Over.");
     campaignGameInProgress = false; 
     campaignRunActive = false; // Run ends immediately on bust
     // No decrementing runAttemptsLeftForQuota here, run is just over.
-    updateCampaignUI(); 
+    updateCampaignUI(); // This will call updateDeckClickableState()
 }
 
 // New shared function for when a quota is successfully met
 function processSuccessfulQuotaCompletion(fromAction) {
     console.log(`[CMP] processSuccessfulQuotaCompletion called from: ${fromAction}. Player Chips: ${campaignPlayer.chips}, Quota: ${currentQuota}`);
-    const profitFromThisQuota = campaignPlayer.chips - baseStartingCapital; // Profit is based on chips accumulated *during the attempts for this specific quota* vs the initial capital for an attempt.
+    const profitFromThisQuota = campaignPlayer.chips - baseStartingCapital;
     currentRunProfit += Math.max(0, profitFromThisQuota); 
     gamesPlayedInRun++; 
     
-    showGameNotification(`SUCCESS! Quota of ${currentQuota} met with ${campaignPlayer.chips} chips! Profit banked: ${Math.max(0, profitFromThisQuota)}.`, 'success', 7000);
+    showGameNotification(`SUCCESS! Quota of ${currentQuota} met with ${campaignPlayer.chips} chips! Profit banked: ${Math.max(0, profitFromThisQuota)}.`, 'success', 7000); // Keep - Major Event
     
     currentQuota = Math.floor(currentQuota * quotaIncreaseFactor);
-    runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL; // Reset attempts for the new quota level
+    runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL; 
     
     console.log(`[CMP] Quota met. New Quota: ${currentQuota}. Run Profit: ${currentRunProfit}. Attempts for new quota level reset to: ${runAttemptsLeftForQuota}.`);
-    showGameNotification(`Next Quota Level: ${currentQuota}. Attempts for new level: ${runAttemptsLeftForQuota}. Starting Capital: ${baseStartingCapital}.`, 'info', 8000);
+    // showGameNotification(`Next Quota Level: ${currentQuota}. Attempts for new level: ${runAttemptsLeftForQuota}. Starting Capital: ${baseStartingCapital}.`, 'info', 8000); // Optional, can be removed
     
-    startNewAttemptForCurrentQuota(); // Starts the first attempt for the NEW quota level
+    startNewAttemptForCurrentQuota(); // This calls updateCampaignUI(), which calls updateDeckClickableState()
 }
 
 function handleCashOutMidRide() {
     if (!campaignRunActive || !campaignGameInProgress || campaignCurrentRound <= 1) {
-        console.warn("[CMP] handleCashOutMidRide: Conditions not met.");
-        showGameNotification("Cannot cash out at this point.", "warning");
+        // console.warn("[CMP] handleCashOutMidRide: Conditions not met."); // Already logs
+        // showGameNotification("Cannot cash out at this point.", "warning"); // Optional warning
         return;
     }
 
@@ -721,37 +801,36 @@ function handleCashOutMidRide() {
     campaignPlayer.chips += winningsFromCashOut; 
     
     console.log(`[CMP] Cashed out mid-ride at R${campaignCurrentRound-1}. Bet was ${campaignPlayer.lastBet}, Won: ${winningsFromCashOut}. New Chips: ${campaignPlayer.chips}`);
-    showGameNotification(`Cashed out at R${campaignCurrentRound-1} for ${winningsFromCashOut}. Total chips: ${campaignPlayer.chips}.`, 'info', 4000);
+    // showGameNotification(`Cashed out at R${campaignCurrentRound-1} for ${winningsFromCashOut}. Total chips: ${campaignPlayer.chips}.`, 'info', 4000);
 
-    if (campaignPlayer.lastBet > 0) campaignPreviousRideBet = campaignPlayer.lastBet; // Capture before reset
+    if (campaignPlayer.lastBet > 0) campaignPreviousRideBet = campaignPlayer.lastBet; 
     runAttemptsLeftForQuota--;
     campaignPlayer.lastBet = 0; 
     campaignGameInProgress = false; 
     if (runAttemptsLeftForQuota > 0) {
-        showGameNotification(`Cashed out. Starting new Ride the Bus sequence. Chips: ${campaignPlayer.chips}. Attempts left: ${runAttemptsLeftForQuota}.`, 'info', 5000);
-        startNewRideSequence(); // Chips persist, new ride for same quota
+        // showGameNotification(`Cashed out. Starting new Ride the Bus sequence. Chips: ${campaignPlayer.chips}. Attempts left: ${runAttemptsLeftForQuota}.`, 'info', 5000);
+        startNewRideSequence(); 
     } else {
-        // Last attempt was used up by this cash out
         console.log("[CMP] Cashed out on last attempt.");
         if (campaignPlayer.chips >= currentQuota) {
-            showGameNotification(`Cashed out on last attempt and MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000);
+            showGameNotification(`Cashed out on last attempt and MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000); // Keep major event
             processSuccessfulQuotaCompletion("Cash Out - Last Attempt");
         } else {
-            showGameNotification(`Run Over. Cashed out on last attempt but FAILED QUOTA of ${currentQuota}. Chips: ${campaignPlayer.chips}.`, 'error', 8000);
+            showGameNotification(`Run Over. Cashed out on last attempt but FAILED QUOTA of ${currentQuota}. Chips: ${campaignPlayer.chips}.`, 'error', 8000); // Keep major event
             campaignRunActive = false;
-            updateCampaignUI(); // Update to show run over state
+            updateCampaignUI();
         }
     }
-    // updateCampaignUI(); // Called by startNewRideSequence or if run ends
+    updateDeckClickableState(); // ADDED: Ensure deck state is updated after a new attempt starts
 }
 
 function playerCompletesQuota() { 
     if (!campaignRunActive || !campaignGameInProgress) {
-        showGameNotification("No active game sequence to complete quota with.", "warning");
+        // showGameNotification("No active game sequence to complete quota with.", "warning"); // Optional
         return;
     }
     if (campaignPlayer.chips < currentQuota) {
-        showGameNotification(`Cannot complete quota. Need ${currentQuota}, have ${campaignPlayer.chips}.`, "error");
+        showGameNotification(`Cannot complete quota. Need ${currentQuota}, have ${campaignPlayer.chips}.`, "error"); // Keep critical error
         return;
     }
     console.log(`[CMP] Player chose to Complete Quota. Chips: ${campaignPlayer.chips}, Current Quota: ${currentQuota}.`);

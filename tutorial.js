@@ -4,6 +4,10 @@ const tutorialSteps = [
         text: "This is a simple card guessing game with five rounds. The goal is to make a correct guess for all five rounds to 'Ride the Bus' and win!"
     },
     {
+        title: "Step 1: Place Your Bet",
+        text: "Before you can start a round, you must place a bet using the controls at the bottom of the screen. You can type in a number or use the slider. Your bet will be locked in for the entire 5-round sequence."
+    },
+    {
         title: "Round 1: Red or Black",
         text: "The first and simplest round. All you have to do is guess if the next card drawn from the deck will be a Red suit (Hearts, Diamonds) or a Black suit (Clubs, Spades)."
     },

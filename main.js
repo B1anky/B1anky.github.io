@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupCampaignMode() {
         activeGameMode = 'campaign';
         console.log("Switched to Campaign Mode");
+        resetPlayersButton.style.display = 'none';
         document.body.classList.add('campaign-mode-active'); // Add campaign class to body
 
         if (addPlayerCard) addPlayerCard.style.display = 'none';

@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bus or Bust</title>
   <link rel="icon" type="image/svg+xml" href="icon.png">
-  <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Bus or Bust">
@@ -19,6 +18,18 @@
       } else {
         // Optional: set a default theme if nothing valid is found or rely on :root defaults
         // document.documentElement.dataset.theme = "neon"; 
+      }
+    })();
+  </script>
+  <script>
+    // Conditionally load manifest only on mobile devices to prevent "Install" prompt on desktop
+    (function() {
+      const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+      if (isMobile) {
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = 'manifest.json';
+        document.head.appendChild(link);
       }
     })();
   </script>
@@ -319,6 +330,7 @@
       font-weight: bold;
       user-select: none;
       transition: box-shadow 0.2s, border 0.2s;
+      min-height: initial;
     }
     .deck::after {
       content: attr(data-count) " left";
@@ -363,6 +375,8 @@
       text-shadow: 0 0 8px var(--ncc-accent2);
       transition: box-shadow 0.2s, border 0.2s;
       user-select: none;
+      margin-right: 0;
+      margin-bottom: 0;
     }
     .card.drawn-card-target {
       opacity: 0;
@@ -445,7 +459,7 @@
       justify-content: center;
       align-items: center;
       width: 100%;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
       gap: 0;
     }
     .player-bet-row input[type="number"] {
@@ -503,7 +517,7 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 30px;
+      margin-top: 15px;
       margin-bottom: 10px;
       width: 100%;
     }
@@ -903,10 +917,15 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh; /* Take full viewport height */
+      height: 100vh; /* Take full viewport height */
       padding: 2rem;
       text-align: center;
       background: var(--ncc-bg); /* Use theme background */
+      overflow: hidden; /* MUST be hidden for overflow detection to work */
+    }
+    #mainMenuContainer.menu-hidden {
+        opacity: 0;
+        transition: opacity 0.2s ease-in;
     }
     .menu-title {
       font-size: 3.5rem;
@@ -914,7 +933,7 @@
       color: var(--ncc-accent);
       letter-spacing: 2px;
       text-shadow: 0 0 12px var(--ncc-accent), 0 0 20px var(--ncc-accent2);
-      margin-bottom: 3rem;
+      margin-bottom: 0.5rem;
     }
     .menu-title img {
         max-width: 90%;
@@ -984,8 +1003,8 @@
     }
 
     #campaignChoiceAndBettingArea {
-      margin-top: 10px;
-      margin-bottom: 10px;
+      margin-top: 5px;
+      margin-bottom: 5px;
     }
 
     #gameControls {
@@ -1253,7 +1272,7 @@
       padding: 0; /* No side padding here */
       box-sizing: border-box;
       margin-top: 10px; /* Space between input and slider */
-      margin-bottom: 20px; /* More space below slider */
+      margin-bottom: 15px; /* More space below slider */
     }
 
     .player-slider-wrapper {
@@ -1569,9 +1588,9 @@
           grid-template-columns: 220px 1fr; /* 2-column layout, hiding aux panel */
           grid-template-rows: 1fr;
           overflow: hidden; /* Re-enable to prevent unwanted scrollbars */
-          padding: 30px 1rem 1rem; /* Add padding for space on sides/bottom */
+          padding: 25px 0.5rem 0.5rem; /* Add padding for space on sides/bottom */
           gap: 0.5rem;
-          height: 100vh; /* Ensure it takes full viewport height */
+          /* height: 100vh;  Let flexbox handle height */
       }
       body.campaign-mode-active main {
           grid-template-columns: 220px 1fr;
@@ -1623,7 +1642,7 @@
       /* Center Panel Scaling */
       .game-board-panel {
           gap: 0.5rem;
-          /* margin-bottom has been removed */
+          padding-top: 0;
       }
       #deckAndDrawnArea {
         min-height: 110px;
@@ -1638,7 +1657,6 @@
       .deck {
           width: 70px;
           height: 100px;
-          margin-bottom: 0.2rem;
       }
       .deck::after { font-size: 0.8rem; }
       .drawn-cards {
@@ -1831,7 +1849,7 @@
     <button class="close-btn" title="Close">&times;</button>
   </div>
 
-  <div id="mainMenuContainer">
+  <div id="mainMenuContainer" class="menu-hidden">
     <h1 class="menu-title"><img src="logo.png" alt="Bus or Bust"></h1>
     <div class="menu-options">
       <!-- <button id="playClassicButton" class="menu-button">Play Classic Mode</button> -->
@@ -1880,7 +1898,7 @@
             <div class="deck" id="deck" data-count="0"></div>
             <div class="drawn-cards" id="drawnCards"></div>
           </div>
-          <div id="campaignChoiceAndBettingArea" style="margin-top: 10px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; width: 100%;">
+          <div id="campaignChoiceAndBettingArea" style="margin-top: 5px; margin-bottom: 5px; display: flex; flex-direction: column; align-items: center; width: 100%;">
               <!-- Bet input, choice buttons, cash-out button will be dynamically added here by JavaScript -->
           </div>
           <div id="gameControls">
@@ -1934,6 +1952,44 @@
   </div>
 
   <!-- Load JavaScript files -->
+  <script>
+    async function enterFullscreenAndLockOrientation() {
+      const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+      if (!isMobile) return;
+
+      const element = document.documentElement;
+
+      // Don't re-trigger if already in fullscreen landscape
+      if (document.fullscreenElement && window.screen.orientation.type.includes('landscape')) {
+          return;
+      }
+      
+      console.log('Attempting to enter fullscreen and lock orientation to landscape.');
+
+      try {
+          if (element.requestFullscreen) {
+              await element.requestFullscreen({ navigationUI: "hide" });
+          } else if (element.webkitRequestFullscreen) { // Safari
+              await element.webkitRequestFullscreen();
+          }
+          
+          // After entering fullscreen, attempt to lock the orientation.
+          await screen.orientation.lock('landscape');
+          console.log('Screen orientation locked to landscape.');
+
+      } catch (error) {
+          console.warn('Failed to lock orientation or enter fullscreen:', error);
+          // Fallback notification for browsers that don't support locking (like iOS Safari)
+          showGameNotification('Rotate your device to landscape for the best experience.', 'info', 4000);
+      }
+  }
+
+  // Attach this function to the button that starts the game.
+  const playCampaignButton = document.getElementById('playCampaignButton');
+  if (playCampaignButton) {
+      playCampaignButton.addEventListener('click', enterFullscreenAndLockOrientation);
+  }
+  </script>
   <script src="core-game-rules.js"></script>
   <script src="classic-mode.js"></script>
   <script src="campaign-mode.js"></script>

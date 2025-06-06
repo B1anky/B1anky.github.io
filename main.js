@@ -336,37 +336,62 @@ function setTheme(themeName) {
 function adjustMenuLogo() {
     const menuContainer = document.getElementById('mainMenuContainer');
     const logo = menuContainer.querySelector('.menu-title img');
-    if (!menuContainer || !logo) return;
-
-    // 1. Reset width to the CSS default to get a baseline
-    logo.style.width = '';
-
-    let maxTries = 10; // Safety break
-
-    function checkAndResize() {
-        if (maxTries-- <= 0) {
-            console.warn('adjustMenuLogo reached max iterations.');
-            return;
-        }
-
-        // 2. Check for overflow
-        if (menuContainer.scrollHeight > menuContainer.clientHeight) {
-            // 3. If overflowing, shrink the logo and re-check on the next frame
-            const currentWidth = logo.clientWidth;
-            logo.style.width = (currentWidth * 0.95) + 'px';
-            requestAnimationFrame(checkAndResize);
-        }
+    
+    if (!menuContainer || !logo) {
+        if (menuContainer) menuContainer.classList.remove('menu-hidden');
+        return;
     }
 
-    // Use setTimeout to ensure the browser has rendered the menu before we start checking
-    setTimeout(() => {
+    const performAdjustment = () => {
+        // 1. Reset width to the CSS default to get a baseline
+        logo.style.width = '';
+
+        let maxTries = 10; // Safety break
+
+        function checkAndResize() {
+            if (maxTries-- <= 0) {
+                console.warn('adjustMenuLogo reached max iterations.');
+                menuContainer.classList.remove('menu-hidden'); // Show menu even if it fails
+                return;
+            }
+
+            // 2. Check for overflow
+            if (menuContainer.scrollHeight > menuContainer.clientHeight) {
+                // 3. If overflowing, shrink the logo and re-check on the next frame
+                const currentWidth = logo.clientWidth;
+                logo.style.width = (currentWidth * 0.95) + 'px';
+                requestAnimationFrame(checkAndResize);
+            } else {
+                // No overflow, we're done. Show the menu.
+                menuContainer.classList.remove('menu-hidden');
+            }
+        }
+        
         requestAnimationFrame(checkAndResize);
-    }, 0);
+    };
+
+    // Ensure the logo image is loaded before we try to measure it.
+    if (logo.complete) {
+        performAdjustment();
+    } else {
+        logo.addEventListener('load', performAdjustment, { once: true });
+        logo.addEventListener('error', () => {
+            // If the logo fails to load, just show the menu anyway.
+            console.error("Logo image failed to load.");
+            performAdjustment(); // Try to adjust based on text/other content
+        }, { once: true });
+    }
 }
 
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
+        const menuContainer = document.getElementById('mainMenuContainer');
+        // Check computed style to see if the menu is actually visible
+        if (menuContainer && window.getComputedStyle(menuContainer).display !== 'none') {
+            menuContainer.classList.add('menu-hidden');
+        }
+
         const later = () => {
             clearTimeout(timeout);
             func(...args);

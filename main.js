@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
             mainMenuContainer.style.display = 'flex';
             gameViewContainer.style.display = 'none';
             document.body.classList.remove('classic-mode-active', 'campaign-mode-active');
+            adjustMenuLogo();
         }
     }
 
@@ -193,7 +194,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (backToMenuButton) {
         backToMenuButton.addEventListener('click', () => {
-            prepareCampaignModeForExit(); // Clean up campaign state if applicable
+            // Reset the state for whichever mode is active.
+            if (currentGameMode === 'campaign') {
+                prepareCampaignModeForExit();
+            } else if (currentGameMode === 'classic') {
+                prepareClassicModeForExit();
+            }
             showMainMenu();
         });
     }
@@ -240,6 +246,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Initial and responsive adjustments for menu layout
+    adjustMenuLogo();
+    window.addEventListener('resize', debounce(adjustMenuLogo, 150));
 }); 
 
 let notificationTimeout = null;
@@ -321,4 +331,47 @@ function loadTheme() {
 function setTheme(themeName) {
     document.documentElement.dataset.theme = themeName;
     localStorage.setItem('theme', themeName);
+}
+
+function adjustMenuLogo() {
+    const menuContainer = document.getElementById('mainMenuContainer');
+    const logo = menuContainer.querySelector('.menu-title img');
+    if (!menuContainer || !logo) return;
+
+    // 1. Reset width to the CSS default to get a baseline
+    logo.style.width = '';
+
+    let maxTries = 10; // Safety break
+
+    function checkAndResize() {
+        if (maxTries-- <= 0) {
+            console.warn('adjustMenuLogo reached max iterations.');
+            return;
+        }
+
+        // 2. Check for overflow
+        if (menuContainer.scrollHeight > menuContainer.clientHeight) {
+            // 3. If overflowing, shrink the logo and re-check on the next frame
+            const currentWidth = logo.clientWidth;
+            logo.style.width = (currentWidth * 0.95) + 'px';
+            requestAnimationFrame(checkAndResize);
+        }
+    }
+
+    // Use setTimeout to ensure the browser has rendered the menu before we start checking
+    setTimeout(() => {
+        requestAnimationFrame(checkAndResize);
+    }, 0);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 } 

@@ -880,18 +880,14 @@ function updateDatalist() {
 }
 
 function prepareClassicModeForExit() {
-    console.log("Preparing Classic Mode for exit. Resetting state.");
-    players = {};
-    selectedPlayer = null;
-    gameInProgress = false;
-    currentRound = 1;
+    console.log("Preparing Classic Mode for exit. Resetting players and game state.");
+    // This effectively resets the classic game state.
+    players = [];
     drawnCards = [];
-    if (activePlayers) activePlayers.clear();
-    else activePlayers = new Set();
-    gamePhase = PHASE_BETTING; // Reset to initial phase
-    // deck = []; // Don't re-initialize deck, just clear it for exit
-    // updateDeckDisplay(); // UI should be cleared by main.js
-    // No need to call saveGameState() when exiting to menu without saving.
+    currentDeck = [];
+    currentRound = 1;
+    gamePhase = PHASE_BETTING;
+    gameInProgress = false;
 }
 
 // The old `DOMContentLoaded` is replaced by `initializeClassicModeView` which is called by `main.js`

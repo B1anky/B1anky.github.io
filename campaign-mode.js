@@ -197,6 +197,7 @@ function updateCampaignUI() {
     updateCampaignDrawnCardsDisplay();
     updateCampaignDebugDisplay(); 
     updateDeckClickableState();
+    updateCashOutButtonState();
 }
 
 // NEW Generic function to animate any numerical value change
@@ -383,6 +384,15 @@ function updateCampaignPlayerDisplay() {
             <div class="stat-block-label">ATTEMPTS LEFT</div>
             <div class="stat-block-value" id="campaignAttemptsValue">${runAttemptsLeftForQuota} / ${ATTEMPTS_PER_QUOTA_LEVEL}</div>
         `;
+        // Create and append Cash Out button here
+        const cashOutButton = document.createElement('button');
+        cashOutButton.id = 'leftPanelCashOutButton';
+        cashOutButton.className = 'button-in-stat-block';
+        cashOutButton.textContent = 'Cash Out';
+        cashOutButton.style.display = 'none'; // Initially hidden
+        cashOutButton.style.marginTop = '10px'; // Give it some space
+        cashOutButton.onclick = () => handleCashOutMidRide();
+        attemptsBlock.appendChild(cashOutButton);
         balatroStatsWrapper.appendChild(attemptsBlock);
         
         const runInfoBlock = document.createElement('div');
@@ -544,25 +554,7 @@ function updateCampaignPlayerDisplay() {
             
             updateCampaignGameButtons(); 
             updateDeckClickableState(); // ADDED: Update deck state when bet changes
-
-            const cashOutRowEl = document.getElementById('campaignCashOutRow'); // Use existing ID if created by this function
-            const cashOutButtonEl = document.getElementById('campaignCashOutButton'); // Use existing ID
-
-            if (cashOutRowEl && cashOutButtonEl) {
-                const 조건_canCashOut = campaignGamePhase === PHASE_BETTING && 
-                                   campaignCurrentRound > 1 && 
-                                   campaignCurrentRound <= 5 && 
-                                   campaignPlayer.lastBet > 0;
-
-                if (조건_canCashOut) {
-                    const cashOutMultiplier = campaignRunRoundMultipliers[campaignCurrentRound - 1] || BASE_ROUND_MULTIPLIERS[campaignCurrentRound - 1];
-                    const potentialCashOutValue = campaignPlayer.lastBet * cashOutMultiplier;
-                    cashOutButtonEl.textContent = `Cash Out [+${potentialCashOutValue} chips] [-1 Attempt]`;
-                    cashOutRowEl.style.display = 'flex'; 
-                } else {
-                    cashOutRowEl.style.display = 'none';
-                }
-            }
+            updateCashOutButtonState();
         } 
     };
 
@@ -658,33 +650,10 @@ function updateCampaignPlayerDisplay() {
         });
     }
 
-    const canShowCashOutInitially = campaignGamePhase === PHASE_BETTING && campaignCurrentRound > 1 && campaignCurrentRound <= 5 && campaignPlayer.lastBet > 0;
-    
-    const cashOutRow = document.createElement('div');
-    cashOutRow.id = 'campaignCashOutRow'; 
-    cashOutRow.style.marginTop = '5px';
-    cashOutRow.style.display = canShowCashOutInitially ? 'flex' : 'none'; 
-    cashOutRow.style.justifyContent = 'center';
-
-    const cashOutButton = document.createElement('button');
-    cashOutButton.id = 'campaignCashOutButton'; 
-    cashOutButton.className = 'draw-button cash-out-mid-ride'; // Use existing classes, can be restyled
-    cashOutButton.onclick = () => handleCashOutMidRide();
-    
-    if (canShowCashOutInitially) {
-        const cashOutMultiplier = campaignRunRoundMultipliers[campaignCurrentRound - 1] || BASE_ROUND_MULTIPLIERS[campaignCurrentRound - 1];
-        const potentialCashOutValue = campaignPlayer.lastBet * cashOutMultiplier;
-        cashOutButton.textContent = `Cash Out [+${potentialCashOutValue} chips] [-1 Attempt]`;
-    } else {
-        cashOutButton.textContent = "Cash Out"; 
-    }
-
-    cashOutRow.appendChild(cashOutButton);
-    // Append cashOutRow and choiceButtonsContainer to the new interactiveControlsContainer
+    // Append choiceButtonsContainer to the new interactiveControlsContainer
     if (choiceButtonsContainer.hasChildNodes()) {
         interactiveControlsContainer.appendChild(choiceButtonsContainer);
     }
-    interactiveControlsContainer.appendChild(cashOutRow); 
 
     console.log("[CMP] updateCampaignPlayerDisplay: Interactive controls updated in campaignChoiceAndBettingArea.");
 }
@@ -871,6 +840,29 @@ function updateDeckClickableState() {
         deckElement.classList.add('deck-inactive');
         deckElement.classList.remove('deck-active');
         deckElement.style.cursor = 'not-allowed';
+    }
+}
+
+function updateCashOutButtonState() {
+    const cashOutButton = document.getElementById('leftPanelCashOutButton');
+    if (!cashOutButton) return;
+
+    const canCashOut = campaignRunActive &&
+                         campaignGameInProgress &&
+                         campaignGamePhase === PHASE_BETTING &&
+                         campaignCurrentRound > 1 &&
+                         campaignCurrentRound <= 5 &&
+                         campaignPlayer.lastBet > 0;
+    
+    if (canCashOut) {
+        const cashOutMultiplier = campaignRunRoundMultipliers[campaignCurrentRound - 1] || BASE_ROUND_MULTIPLIERS[campaignCurrentRound - 1];
+        const potentialCashOutValue = campaignPlayer.lastBet * cashOutMultiplier;
+        cashOutButton.textContent = `Cash Out (+${potentialCashOutValue} chips)`;
+        cashOutButton.style.display = 'block';
+        cashOutButton.disabled = false;
+    } else {
+        cashOutButton.style.display = 'none';
+        cashOutButton.disabled = true;
     }
 }
 

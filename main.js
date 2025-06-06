@@ -1,9 +1,10 @@
 let activeGameMode = null; // Can be 'classic' or 'campaign'
+let currentGameMode = 'classic'; // Default mode
 
 document.addEventListener('DOMContentLoaded', function() {
     const mainMenuContainer = document.getElementById('mainMenuContainer');
     const gameViewContainer = document.getElementById('gameViewContainer');
-    //const playClassicButton = document.getElementById('playClassicButton');
+    const playClassicButton = document.getElementById('playClassicButton');
     const playCampaignButton = document.getElementById('playCampaignButton');
     const backToMenuButton = document.getElementById('backToMenuButton');
     const resetPlayersButton = document.getElementById('resetPlayersButton');
@@ -16,6 +17,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const drawnCardsContainer = document.getElementById('drawnCards'); // To clear
     const newGameButton = document.getElementById('newGameButton');
     const completeQuotaButton = document.getElementById('completeQuotaButton');
+    const newPlayerNameInput = document.getElementById('newPlayerNameInput');
+    const newPlayerChipsInput = document.getElementById('newPlayerChipsInput');
+    const addPlayerForm = document.querySelector('.add-player-form');
+    const themeSelector = document.getElementById('themeSelector');
+    const debugToggle = document.getElementById('toggleDebugNextCard');
+    const tutorialButton = document.getElementById('tutorialButton');
+    const tutorialCloseButton = document.getElementById('tutorialCloseButton');
+    const tutorialModal = document.getElementById('tutorialModal');
+    const header = document.querySelector('header');
+    const headerToggleButton = document.getElementById('headerToggleButton');
 
     // Load saved theme on initial page load for the main menu
     if (typeof loadTheme === 'function') {
@@ -92,80 +103,102 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showGameView(mode) {
-        mainMenuContainer.style.display = 'none';
-        gameViewContainer.style.display = 'flex';
-        
-        // Add a class to the body to signify which mode is active.
-        // This can be used for mode-specific CSS.
+        const mainMenu = document.getElementById('mainMenuContainer');
+        const gameView = document.getElementById('gameViewContainer');
+        const resetPlayersButton = document.getElementById('resetPlayersButton');
+        const auxPanel = document.getElementById('auxPanel');
+
+        mainMenu.style.display = 'none';
+        gameView.style.display = 'flex';
+
+        currentGameMode = mode;
+        console.log(`Switched to ${mode} mode.`);
+
         if (mode === 'classic') {
             document.body.classList.remove('campaign-mode-active');
             document.body.classList.add('classic-mode-active');
             document.getElementById('classicPlayersPanel').style.display = 'flex';
             document.getElementById('campaignPlayersPanel').style.display = 'none';
+            resetPlayersButton.style.display = 'inline-block';
+            auxPanel.style.display = 'flex';
         } else if (mode === 'campaign') {
-            setupCampaignMode();
+            document.body.classList.remove('classic-mode-active');
+            document.body.classList.add('campaign-mode-active');
+            document.getElementById('classicPlayersPanel').style.display = 'none';
+            document.getElementById('campaignPlayersPanel').style.display = 'flex';
+            resetPlayersButton.style.display = 'none';
+            auxPanel.style.display = 'none';
         }
     }
 
-    if (mainMenuContainer && gameViewContainer /*&& playClassicButton*/ && backToMenuButton && playCampaignButton && drawCardButton) {
-        // playClassicButton.addEventListener('click', () => {
-        //     mainMenuContainer.style.display = 'none';
-        //     gameViewContainer.style.display = 'flex';
-        //     gameViewContainer.style.flexDirection = 'column';
-        //     setupClassicMode();
-        //     if (resetPlayersButton) resetPlayersButton.style.display = '';
-        // });
+    // --- Header Collapse Logic ---
+    if (header && headerToggleButton) {
+        // Start expanded on larger screens for better UX, collapsed on mobile/tablet
+        if (window.innerWidth > 1024) {
+            header.classList.add('header-expanded');
+        } else {
+            header.classList.remove('header-expanded');
+        }
 
-        playCampaignButton.addEventListener('click', () => {
-            console.log("Play Campaign button clicked");
-            showGameView('campaign');
-            initializeCampaignMode(); 
-        });
-
-        backToMenuButton.addEventListener('click', () => {
-            if (activeGameMode === 'classic') {
-                // saveGameState(); // Decide if saving on exit is desired for classic
-                if (typeof prepareClassicModeForExit === 'function') {
-                    prepareClassicModeForExit();
-                } else {
-                    console.warn("prepareClassicModeForExit not found. Classic state might persist.");
-                }
-            } else if (activeGameMode === 'campaign') {
-                // TODO: Add logic to save campaign run state if it's active and savable
-                console.log("Returned to menu from campaign mode. Campaign state saving TBD.");
-                if (typeof campaignRunActive !== 'undefined' && campaignRunActive) {
-                    // alert("Warning: Campaign run is active. Progress might be lost if not saved.");
-                }
-                if (typeof prepareCampaignModeForExit === 'function') {
-                    prepareCampaignModeForExit();
-                } else {
-                    console.warn("prepareCampaignModeForExit not found. Campaign state might persist.");
-                }
-            }
-            if (resetPlayersButton) resetPlayersButton.style.display = 'none';
-            activeGameMode = null;
-            gameViewContainer.style.display = 'none';
-            mainMenuContainer.style.display = 'flex';
-            document.body.classList.remove('campaign-mode-active'); // Clean up on back to menu
-            if (drawCardButton) drawCardButton.onclick = null; // Clear listener
-            if (addPlayerCard) addPlayerCard.style.display = 'flex'; // Default
-            //if (campaignStatusDisplay) campaignStatusDisplay.style.display = 'none'; // Default
-            
-            if (classicPlayersPanel) {
-                classicPlayersPanel.innerHTML = ''; 
-                classicPlayersPanel.style.display = 'none';
-            }
-            if (campaignPlayersPanel) {
-                campaignPlayersPanel.innerHTML = '';
-                campaignPlayersPanel.style.display = 'none';
-            }
-            if (drawnCardsContainer) drawnCardsContainer.innerHTML = ''; // Clear drawn cards
-            document.getElementById('roundInfo').textContent = 'Round info here'; // Reset text
-            document.getElementById('roundMultiplier').textContent = 'Multiplier info here';
-            document.getElementById('deck').setAttribute('data-count', '0');
+        headerToggleButton.addEventListener('click', () => {
+            header.classList.toggle('header-expanded');
         });
     }
 
+    // --- Tutorial Modal Logic ---
+    if (tutorialButton && tutorialModal) {
+        tutorialButton.addEventListener('click', () => {
+            startTutorial();
+        });
+    }
+
+    if(tutorialCloseButton && tutorialModal) {
+        tutorialCloseButton.addEventListener('click', () => {
+            closeTutorial();
+        });
+    }
+
+    const tutorialNextButton = document.getElementById('tutorialNextButton');
+    if (tutorialNextButton) {
+        tutorialNextButton.addEventListener('click', () => {
+            if (tutorialNextButton.textContent === 'Finish') {
+                closeTutorial();
+            } else {
+                nextStep();
+            }
+        });
+    }
+
+    const tutorialPrevButton = document.getElementById('tutorialPrevButton');
+    if (tutorialPrevButton) {
+        tutorialPrevButton.addEventListener('click', () => {
+            prevStep();
+        });
+    }
+
+    // --- Main Menu and Game View Logic ---
+    if (playClassicButton) {
+        playClassicButton.addEventListener('click', () => {
+            showGameView('classic');
+            setupClassicMode();
+        });
+    }
+
+    if (playCampaignButton) {
+        playCampaignButton.addEventListener('click', () => {
+            showGameView('campaign');
+            initializeCampaignMode();
+        });
+    }
+
+    if (backToMenuButton) {
+        backToMenuButton.addEventListener('click', () => {
+            prepareCampaignModeForExit(); // Clean up campaign state if applicable
+            showMainMenu();
+        });
+    }
+
+    // --- Classic Mode Game Controls ---
     if (newGameButton) {
         newGameButton.addEventListener('click', () => {
             if (activeGameMode === 'classic') {
@@ -178,74 +211,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (drawCardButton) {
-        drawCardButton.addEventListener('click', () => {
-            if (activeGameMode === 'classic') {
-                classicDrawCard(); 
-            } else if (activeGameMode === 'campaign') {
-                campaignDrawCard(); 
-            } else {
-                console.log("Draw card clicked, but no active game mode.");
-            }
+    if (addPlayerForm) {
+        addPlayerForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            handleAddPlayerOrLoan();
         });
     }
 
-    if (completeQuotaButton) {
-        completeQuotaButton.addEventListener('click', () => {
-            if (activeGameMode === 'campaign') {
-                playerCompletesQuota();
-            } else {
-                console.log("Complete Quota button clicked, but not in Campaign Mode.");
-            }
+    // --- Global Controls ---
+    if (themeSelector) {
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'neon';
+        document.documentElement.dataset.theme = savedTheme;
+        themeSelector.value = savedTheme;
+
+        // Listen for changes
+        themeSelector.addEventListener('change', (event) => {
+            setTheme(event.target.value);
         });
     }
 
-    // ... (theme selector, debug toggle, etc.)
-    loadTheme(); 
-    const themeSelector = document.getElementById('themeSelector');
-    if(themeSelector) {
-        themeSelector.value = localStorage.getItem('theme') || 'default-theme';
-        themeSelector.addEventListener('change', function() {
-            applyTheme(this.value);
-        });
-    }
-
-    const debugToggle = document.getElementById('toggleDebugNextCard');
-    if (debugToggle) {
+    if(debugToggle) {
         debugToggle.addEventListener('change', () => {
-            if (activeGameMode === 'classic') {
-                updateDebugNextCardDisplay(); 
-            } else if (activeGameMode === 'campaign') {
-                updateCampaignDebugDisplay(); 
+            if (currentGameMode === 'classic') {
+                updateDebugNextCardDisplay();
+            } else if (currentGameMode === 'campaign') {
+                updateCampaignDebugDisplay();
             }
         });
     }
-
-    // --- Tutorial Event Listeners ---
-    function handleTutorialNextClick() {
-        if (currentStep === tutorialSteps.length - 1) {
-            closeTutorial();
-        } else {
-            nextStep();
-        }
-    }
-
-    document.getElementById('tutorialButton').addEventListener('click', startTutorial);
-    document.getElementById('tutorialCloseButton').addEventListener('click', closeTutorial);
-    document.getElementById('tutorialNextButton').addEventListener('click', handleTutorialNextClick);
-    document.getElementById('tutorialPrevButton').addEventListener('click', prevStep);
-    
-    // --- Other Event Listeners ---
-    document.getElementById('backToMenuButton').addEventListener('click', showMainMenu);
-
-    document.getElementById('resetPlayersButton').addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset all players and scores? This cannot be undone.')) {
-            if (document.body.classList.contains('classic-mode-active')) {
-                 resetClassicGame();
-            }
-            // Add campaign reset logic here if needed in the future
-        }
-    });
 }); 
 
 let notificationTimeout = null;
@@ -309,7 +303,6 @@ function applyTheme(themeName) {
     console.log(`Theme applied: ${themeName}`);
 
     // Update theme selector dropdown if it exists (it might not on initial load if script runs before DOMContentLoaded)
-    const themeSelector = document.getElementById('themeSelector');
     if (themeSelector) {
         themeSelector.value = themeName;
     }
@@ -323,4 +316,9 @@ function loadTheme() {
     } else {
         applyTheme("neon"); // Default theme if nothing valid saved
     }
+}
+
+function setTheme(themeName) {
+    document.documentElement.dataset.theme = themeName;
+    localStorage.setItem('theme', themeName);
 } 

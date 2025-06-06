@@ -120,13 +120,74 @@
       background: var(--ncc-panel);
       border-bottom: 2px solid var(--ncc-border);
       box-shadow: var(--ncc-shadow);
+      position: fixed; /* Changed to fixed for overlay behavior */
+      top: 0;
+      z-index: 10;
+      /* --- Modified for collapsibility --- */
+      padding: 0;
+      transition: max-height 0.4s ease-in-out, border-bottom-width 0.1s 0.3s ease-in-out;
+      overflow: visible; /* Allow toggle button to hang off the bottom */
+      height: auto;
+    }
+    .header-collapsible-content {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0.5rem 2rem;
-      position: sticky;
+      overflow: hidden;
+      opacity: 1;
+      transition: opacity 0.3s 0.1s ease-in-out, padding 0.4s ease-in-out;
+    }
+    header.header-expanded {
+      max-height: 70px; /* Set explicit height for transition */
+    }
+    header:not(.header-expanded) {
+      max-height: 0px; /* Collapsed height to house the button */
+      border-bottom-width: 0;
+      transition: max-height 0.4s ease-in-out, border-bottom-width 0.1s ease-in-out;
+    }
+    header:not(.header-expanded) .header-collapsible-content {
+      opacity: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      pointer-events: none;
+      transition: opacity 0.1s ease-in-out, padding 0.4s ease-in-out;
+    }
+    .header-toggle-button {
+      position: absolute;
       top: 0;
-      z-index: 10;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ncc-panel);
+      border: 2px solid var(--ncc-border);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      width: 100px;
+      height: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      color: var(--ncc-accent);
+      transition: background 0.2s, color 0.2s, top 0.4s ease-in-out, transform 0.4s ease-in-out;
+    }
+    header.header-expanded .header-toggle-button {
+      top: 100%;
+      transform: translateX(-50%) translateY(-100%);
+    }
+    .header-toggle-button:hover {
+      background: var(--ncc-accent);
+      color: var(--ncc-bg);
+    }
+    .header-toggle-button .chevron-icon {
+      transition: transform 0.4s ease-in-out;
+    }
+    header.header-expanded .header-toggle-button .chevron-icon {
+      transform: rotate(0deg); /* Points up when expanded */
+    }
+    header:not(.header-expanded) .header-toggle-button .chevron-icon {
+      transform: rotate(180deg); /* Points down when collapsed */
     }
     .game-title {
       font-size: 2rem;
@@ -652,6 +713,10 @@
       }
     }
     @media (max-width: 700px) {
+      html, body {
+        height: 100%; /* Ensure html/body are viewport height */
+        overflow: hidden; /* Prevent scrolling on the root elements */
+      }
       header {
         flex-direction: column;
         align-items: flex-start;
@@ -664,14 +729,20 @@
       main {
         padding: 0.5rem;
         gap: 0.7rem;
+        flex: 1; /* Allow main to fill space */
+        overflow-y: auto; /* Allow ONLY main content to scroll if absolutely necessary */
       }
       .panel {
         padding: 0.7rem 0.5rem;
+        flex-shrink: 1; /* Allow all panels to shrink to prevent overflow */
       }
       .players-panel {
         flex-direction: column;
         flex-wrap: nowrap;
         gap: 0.7rem;
+        max-width: 100%;
+        margin-bottom: 0.7rem;
+        margin-right: 0;
       }
       .player-controls {
         min-width: 0;
@@ -699,7 +770,7 @@
         gap: 0.3rem;
       }
       .game-board-panel {
-        min-height: 180px;
+        min-height: unset; /* Remove fixed min-height on mobile */
         gap: 0.7rem;
         padding: 0.2rem;
       }
@@ -727,6 +798,9 @@
       }
       .aux-card {
         padding: 0.5rem 0.3rem 0.6rem 0.3rem;
+      }
+      .campaign-mode-left-panel {
+        min-height: unset; /* Remove fixed min-height on mobile */
       }
     }
 
@@ -949,8 +1023,7 @@
     /* === Styles for Campaign Mode: Left Panel (Balatro Inspired) - REVISED === */
 
     body.campaign-mode-active main {
-      grid-template-columns: 300px 2fr 1fr; /* Give left panel more fixed width */
-      /* Adjust gap/padding as needed if this makes center too cramped */
+      grid-template-columns: 300px 1fr; /* Two-column layout for campaign */
     }
 
     .campaign-mode-left-panel {
@@ -1431,6 +1504,278 @@
       color: var(--ncc-text2);
       font-weight: 600;
     }
+
+    /* Mobile Landscape Overrides */
+    @media (max-width: 1100px) and (max-height: 500px) and (orientation: landscape) {
+      /* Main Menu Scaling */
+      #mainMenuContainer {
+          padding: 1rem;
+          min-height: 100vh;
+      }
+      .menu-title {
+          margin-bottom: 1.5rem; /* Reduce space below title */
+      }
+      .menu-title img {
+          width: 300px; /* Smaller logo */
+      }
+      .menu-options {
+          gap: 0.75rem; /* Tighter button spacing */
+          max-width: 320px;
+      }
+      .menu-button {
+          padding: 0.7rem 1.5rem; /* Smaller buttons */
+          font-size: 1rem;
+      }
+
+      /* Adjust expanded header height for smaller content */
+      header.header-expanded {
+        max-height: 45px;
+      }
+
+      /* Smaller header for landscape */
+      header {
+          padding: 0;
+      }
+      .header-collapsible-content {
+          padding: 0.25rem 1rem;
+      }
+      .game-title img {
+          height: 28px;
+      }
+      .header-controls {
+          gap: 0.5rem;
+      }
+      .header-controls button, .header-theme-select {
+          padding: 0.2rem 0.6rem;
+          font-size: 0.8rem;
+      }
+
+      /* Main layout adjustment */
+      main {
+          grid-template-columns: 220px 1fr; /* 2-column layout, hiding aux panel */
+          grid-template-rows: 1fr;
+          overflow: hidden;
+          padding: 30px 0.5rem 0.5rem; /* Add top padding for overlay header */
+          gap: 0.5rem;
+          height: 100vh; /* Ensure it takes full viewport height */
+      }
+      body.campaign-mode-active main {
+          grid-template-columns: 220px 1fr;
+      }
+      .aux-panel {
+          display: none;
+      }
+      .panel {
+          height: 100%;
+          overflow-y: auto;
+          padding: 0.5rem;
+      }
+
+      /* Left Panel Scaling */
+      .campaign-mode-left-panel {
+          padding: 10px;
+          gap: 8px;
+      }
+      .stat-block {
+          padding: 8px;
+          margin-bottom: 0;
+      }
+      .stat-block-label { font-size: 0.7rem; }
+      .chips-block .stat-block-value { font-size: 2rem; }
+      .quota-block .stat-block-value, .attempts-block .stat-block-value { font-size: 1.6rem; }
+      .button-in-stat-block { font-size: 0.8rem; padding: 5px; }
+      .run-info-item { font-size: 0.8rem; }
+
+      /* Center Panel Scaling */
+      .game-board-panel {
+          gap: 0.5rem;
+      }
+      .round-info, .round-multiplier {
+          font-size: 0.9rem;
+          padding: 0.4rem;
+          margin-bottom: 0.2rem;
+      }
+      .deck {
+          width: 70px;
+          height: 100px;
+          margin-bottom: 0.2rem;
+      }
+      .deck::after { font-size: 0.8rem; }
+      .drawn-cards {
+          min-height: 80px;
+      }
+      .card {
+          width: 60px;
+          height: 80px;
+          font-size: 1.2rem;
+      }
+
+      /* Controls scaling */
+      #campaignChoiceAndBettingArea {
+          margin: 0;
+          width: 100%;
+      }
+      .player-bet-row {
+          margin-bottom: 5px;
+      }
+      .player-bet-row input[type="number"] {
+        font-size: 1rem;
+        padding: 0.4rem 0.5rem;
+        max-width: 80px;
+      }
+      .bet-input-suffix {
+        font-size: 1rem;
+        padding: 0.4rem 0.5rem;
+      }
+      .player-slider-row {
+        margin-top: 8px;
+        margin-bottom: 8px;
+      }
+      .choice-buttons {
+          margin-top: 5px;
+          gap: 5px;
+      }
+      .choice-buttons > button, select.choice-button {
+          padding: 0.4rem 0.8rem;
+          font-size: 0.9rem;
+          min-width: auto;
+      }
+      #campaignCashOutRow {
+        margin-top: 8px;
+      }
+      .cash-out-mid-ride {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+        white-space: normal;
+        line-height: 1.2;
+        max-width: 90%;
+      }
+    }
+    
+    @media (max-width: 1100px) and (orientation: portrait) {
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 1.2rem;
+        padding: 1rem;
+      }
+      .panel {
+        min-width: 0;
+        max-width: 100%;
+      }
+      .players-panel {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        justify-content: flex-start;
+        align-items: stretch;
+      }
+      .player-controls {
+        min-width: 180px;
+        max-width: 100%;
+        flex: 1 1 220px;
+        margin-bottom: 0.7rem;
+        margin-right: 0.7rem;
+      }
+      .aux-panel {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .aux-card {
+        padding: 0.7rem 0.5rem 0.8rem 0.5rem;
+      }
+    }
+    @media (max-width: 700px) and (orientation: portrait) {
+      html, body {
+        height: 100%; /* Ensure html/body are viewport height */
+        overflow: hidden; /* Prevent scrolling on the root elements */
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.7rem 1rem;
+        gap: 0.5rem;
+      }
+      .game-title {
+        font-size: 1.3rem;
+      }
+      main {
+        padding: 0.5rem;
+        gap: 0.7rem;
+        flex: 1; /* Allow main to fill space */
+        overflow-y: auto; /* Allow ONLY main content to scroll if absolutely necessary */
+      }
+      .panel {
+        padding: 0.7rem 0.5rem;
+        flex-shrink: 1; /* Allow all panels to shrink to prevent overflow */
+      }
+      .players-panel {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0.7rem;
+        max-width: 100%;
+        margin-bottom: 0.7rem;
+        margin-right: 0;
+      }
+      .player-controls {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 0.7rem;
+        margin-right: 0;
+      }
+      .player-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+      }
+      .player-chips {
+        margin-left: 0;
+        margin-top: 0.2rem;
+      }
+      .player-bet-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.3rem;
+      }
+      .choice-buttons {
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      .game-board-panel {
+        min-height: unset; /* Remove fixed min-height on mobile */
+        gap: 0.7rem;
+        padding: 0.2rem;
+      }
+      .deck {
+        width: 55px;
+        height: 75px;
+        font-size: 1rem;
+      }
+      .drawn-cards {
+        min-height: 60px;
+        gap: 0.2rem;
+      }
+      .card {
+        width: 38px;
+        height: 55px;
+        font-size: 0.8rem;
+      }
+      .round-info, .round-multiplier {
+        font-size: 0.9rem;
+        padding: 0.3rem 0.4rem;
+      }
+      .aux-panel {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .aux-card {
+        padding: 0.5rem 0.3rem 0.6rem 0.3rem;
+      }
+      .campaign-mode-left-panel {
+        min-height: unset; /* Remove fixed min-height on mobile */
+      }
+    }
   </style>
 </head>
 <body>
@@ -1451,17 +1796,24 @@
 
   <div id="gameViewContainer" style="display: none; flex-direction: column; flex: 1;">
     <header>
-      <div class="game-title"><img src="name.png" alt="Bus or Bust"></div>
-      <div class="header-controls">
-        <button id="backToMenuButton">Back to Main Menu</button>
-        <button id="resetPlayersButton">Reset</button>
-        <select id="themeSelector" class="header-theme-select">
-          <option value="neon" style="background-color: #10101a; color: #00fff7;">Neon Glow</option>
-          <option value="light" style="background-color: #f8f9fa; color: #212529;">Bright Day</option>
-          <option value="dark-standard" style="background-color: #212529; color: #f8f9fa;">Classic Dark</option>
-          <option value="casino-green" style="background-color: #1D7223; color: #FFD700;">Casino Night</option>
-        </select>
+      <div class="header-collapsible-content">
+        <div class="game-title"><img src="name.png" alt="Bus or Bust"></div>
+        <div class="header-controls">
+          <button id="backToMenuButton">Back to Main Menu</button>
+          <button id="resetPlayersButton">Reset</button>
+          <select id="themeSelector" class="header-theme-select">
+            <option value="neon" style="background-color: #10101a; color: #00fff7;">Neon Glow</option>
+            <option value="light" style="background-color: #f8f9fa; color: #212529;">Bright Day</option>
+            <option value="dark-standard" style="background-color: #212529; color: #f8f9fa;">Classic Dark</option>
+            <option value="casino-green" style="background-color: #1D7223; color: #FFD700;">Casino Night</option>
+          </select>
+        </div>
       </div>
+      <button id="headerToggleButton" class="header-toggle-button" aria-label="Toggle Header">
+        <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+        </svg>
+      </button>
     </header>
     <main>
       <section class="panel players-panel" id="classicPlayersPanel">

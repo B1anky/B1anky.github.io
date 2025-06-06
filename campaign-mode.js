@@ -130,6 +130,7 @@ function startNewCampaignRun() {
 function startNewAttemptForCurrentQuota() {
     console.log(`[CMP] Starting New Full Attempt for Quota: ${currentQuota}. Previous Ride Bet was: ${campaignPreviousRideBet}`);
     campaignPlayer.chips = baseStartingCapital;
+    animateChipsDisplay(campaignPlayer.chips, 'win'); // Animate chips resetting
     campaignBetLockedForRide = false; 
     campaignCurrentRound = 1;
     campaignDeck = createInitialDeck();
@@ -198,29 +199,59 @@ function updateCampaignUI() {
     updateDeckClickableState();
 }
 
-function animateChipsDisplay(finalValue, type) {
-    if (isChipAnimationInProgress) return; // Prevent overlapping animations
-
-    const chipsValueElement = document.querySelector('.chips-block .stat-block-value');
-    if (!chipsValueElement) return;
-
-    const startValue = parseInt(chipsValueElement.textContent, 10);
-
-    if (isNaN(startValue)) {
-        chipsValueElement.textContent = finalValue;
+// NEW Generic function to animate any numerical value change
+function animateValueDisplay(selector, finalValue, options = {}) {
+    const element = document.querySelector(selector);
+    if (!element) {
+        // This can happen if the run ends and the panel is removed before animation completes.
+        // console.warn(`[animateValueDisplay] Element with selector "${selector}" not found.`);
         return;
     }
 
-    const change = finalValue - startValue;
-    if (change === 0) {
+    // If an animation is already running, cancel it. This ensures the newest value is animated to.
+    if (element.animationRequestId) {
+        cancelAnimationFrame(element.animationRequestId);
+    }
+    // Clean up any lingering visual classes from a previously cancelled animation
+    if (element.dataset.animationClass) {
+        element.classList.remove(element.dataset.animationClass);
+    }
+
+    const {
+        duration = 800,
+        animationClass,
+        prefix = '',
+        suffix = ''
+    } = options;
+
+    const startValueText = element.textContent.trim().replace(prefix, '').replace(suffix, '');
+    const startValue = parseInt(startValueText, 10);
+    
+    // If not a number, or if there's no change, just set the text and finish.
+    if (isNaN(startValue)) {
+        element.textContent = `${prefix}${finalValue}${suffix}`;
         return;
     }
     
-    isChipAnimationInProgress = true;
-    const animationClass = type === 'win' ? 'chips-win' : 'chips-loss';
-    chipsValueElement.classList.add(animationClass);
-
-    const duration = 800; // ms
+    const change = finalValue - startValue;
+    if (change === 0) {
+        // Even if value is the same, if there's a visual class, apply it for feedback.
+        if (animationClass) {
+            element.classList.add(animationClass);
+            element.dataset.animationClass = animationClass;
+             setTimeout(() => {
+                element.classList.remove(animationClass);
+                delete element.dataset.animationClass;
+            }, 500);
+        }
+        return;
+    }
+    
+    if (animationClass) {
+        element.classList.add(animationClass);
+        element.dataset.animationClass = animationClass; // Remember which class we added
+    }
+    
     let startTime = null;
 
     function step(timestamp) {
@@ -229,20 +260,33 @@ function animateChipsDisplay(finalValue, type) {
         const percentage = Math.min(progress / duration, 1);
         
         const currentValue = Math.floor(startValue + (change * percentage));
-        chipsValueElement.textContent = currentValue;
+        element.textContent = `${prefix}${currentValue}${suffix}`;
         
         if (progress < duration) {
-            requestAnimationFrame(step);
+            element.animationRequestId = requestAnimationFrame(step);
         } else {
-            chipsValueElement.textContent = finalValue;
-            setTimeout(() => {
-                chipsValueElement.classList.remove(animationClass);
-                isChipAnimationInProgress = false;
-            }, 500); // Keep color for a moment
+            element.textContent = `${prefix}${finalValue}${suffix}`;
+            if (animationClass) {
+                setTimeout(() => {
+                    element.classList.remove(animationClass);
+                    delete element.dataset.animationClass;
+                }, 500); // Keep color for a moment
+            }
+            delete element.animationRequestId;
         }
     }
 
-    requestAnimationFrame(step);
+    element.animationRequestId = requestAnimationFrame(step);
+}
+
+function animateChipsDisplay(finalValue, type) {
+    const selector = '#campaignChipsValue';
+    const animationClass = type === 'win' ? 'chips-win' : 'chips-loss';
+    
+    animateValueDisplay(selector, finalValue, {
+        duration: 800,
+        animationClass: animationClass
+    });
 }
 
 function displayRunOverSummary() {
@@ -299,20 +343,22 @@ function updateCampaignPlayerDisplay() {
         return; // Do nothing if panel doesn't exist or run is over
     }
 
-    playerInfoPanel.innerHTML = ''; 
-    playerInfoPanel.style.display = 'flex'; 
-    playerInfoPanel.style.flexDirection = 'column';
-    playerInfoPanel.className = 'panel players-panel campaign-mode-left-panel';
+    // Check if the panel has been built. If not, build it.
+    let balatroStatsWrapper = playerInfoPanel.querySelector('.balatro-stats-wrapper');
+    if (!balatroStatsWrapper) {
+        playerInfoPanel.innerHTML = ''; 
+        playerInfoPanel.style.display = 'flex'; 
+        playerInfoPanel.style.flexDirection = 'column';
+        playerInfoPanel.className = 'panel players-panel campaign-mode-left-panel';
 
-    if (campaignRunActive) {
-        const balatroStatsWrapper = document.createElement('div');
+        balatroStatsWrapper = document.createElement('div');
         balatroStatsWrapper.className = 'balatro-stats-wrapper';
 
         const chipsBlock = document.createElement('div');
         chipsBlock.className = 'stat-block chips-block';
         chipsBlock.innerHTML = `
             <div class="stat-block-label">CHIPS</div>
-            <div class="stat-block-value">${campaignPlayer.chips}</div>
+            <div class="stat-block-value" id="campaignChipsValue">${campaignPlayer.chips}</div>
         `;
         balatroStatsWrapper.appendChild(chipsBlock);
 
@@ -320,14 +366,13 @@ function updateCampaignPlayerDisplay() {
         quotaBlock.className = 'stat-block quota-block';
         quotaBlock.innerHTML = `
             <div class="stat-block-label">TARGET QUOTA</div>
-            <div class="stat-block-value">${currentQuota}</div>
+            <div class="stat-block-value" id="campaignQuotaValue">${currentQuota}</div>
         `;
         // Create and append Complete Quota button here
         const completeQuotaButton = document.createElement('button');
         completeQuotaButton.id = 'completeQuotaButton';
         completeQuotaButton.className = 'button-in-stat-block'; // New class for styling
         completeQuotaButton.textContent = 'Complete Quota'; // Simplified text
-        completeQuotaButton.disabled = !(campaignPlayer.chips >= currentQuota); 
         completeQuotaButton.onclick = () => playerCompletesQuota(); // Ensure onclick is set
         quotaBlock.appendChild(completeQuotaButton);
         balatroStatsWrapper.appendChild(quotaBlock);
@@ -336,7 +381,7 @@ function updateCampaignPlayerDisplay() {
         attemptsBlock.className = 'stat-block attempts-block';
         attemptsBlock.innerHTML = `
             <div class="stat-block-label">ATTEMPTS LEFT</div>
-            <div class="stat-block-value">${runAttemptsLeftForQuota} / ${ATTEMPTS_PER_QUOTA_LEVEL}</div>
+            <div class="stat-block-value" id="campaignAttemptsValue">${runAttemptsLeftForQuota} / ${ATTEMPTS_PER_QUOTA_LEVEL}</div>
         `;
         balatroStatsWrapper.appendChild(attemptsBlock);
         
@@ -344,17 +389,22 @@ function updateCampaignPlayerDisplay() {
         runInfoBlock.className = 'stat-block run-info-block';
         runInfoBlock.innerHTML = `
             <div class="stat-block-label">RUN PROGRESS</div>
-            <div class="run-info-item"><span class="run-info-label">Profit:</span> <span class="run-info-value profit-value">${currentRunProfit}</span></div>
-            <div class="run-info-item"><span class="run-info-label">Quotas Cleared:</span> <span class="run-info-value">${gamesPlayedInRun}</span></div>
+            <div class="run-info-item"><span class="run-info-label">Profit:</span> <span class="run-info-value profit-value" id="campaignProfitValue">${currentRunProfit}</span></div>
+            <div class="run-info-item"><span class="run-info-label">Quotas Cleared:</span> <span class="run-info-value" id="campaignQuotasClearedValue">${gamesPlayedInRun}</span></div>
         `;
         balatroStatsWrapper.appendChild(runInfoBlock);
 
         playerInfoPanel.appendChild(balatroStatsWrapper);
-
-    } else { // Run is not active, display summary
-        // This logic is now handled by displayRunOverSummary()
+    }
+    
+    // --- Update state of controls that aren't animated values ---
+    const completeQuotaButton = document.getElementById('completeQuotaButton');
+    if (completeQuotaButton) {
+        completeQuotaButton.disabled = !(campaignPlayer.chips >= currentQuota); 
     }
 
+    // The rest of this function handles the INTERACTIVE CONTROLS in the CENTER panel
+    // This part should still be cleared and re-rendered on each update, as its state is highly dynamic.
     const interactiveControlsContainer = document.getElementById('campaignChoiceAndBettingArea');
     if (!interactiveControlsContainer) {
         console.error("[CMP] updateCampaignPlayerDisplay: ERROR - campaignChoiceAndBettingArea element NOT FOUND!");
@@ -973,6 +1023,7 @@ function campaignProcessRoundResults(drawnCard) {
             // showGameNotification(`SUCCESS! Rode the Bus! Chips: ${campaignPlayer.chips}.`, 'success', 4000); // R5 win summary
             if (rideEndingBet > 0) campaignPreviousRideBet = rideEndingBet;
             runAttemptsLeftForQuota--;
+            animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-loss', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
             console.log(`[CMP] R5 Win sequence ended. Attempt consumed. Attempts left: ${runAttemptsLeftForQuota}`);
             if (runAttemptsLeftForQuota > 0) {
                 // showGameNotification("Ride complete! Starting new Ride sequence...", "info", 1800);
@@ -1009,10 +1060,11 @@ function campaignProcessRoundResults(drawnCard) {
         // If they have chips, but lost the ride, it consumes an attempt.
         if (rideEndingBet > 0) campaignPreviousRideBet = rideEndingBet;
         runAttemptsLeftForQuota--;
+        animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-loss', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
         console.log(`[CMP] Incorrect guess. Attempt consumed. Attempts left: ${runAttemptsLeftForQuota}`);
         
         if (runAttemptsLeftForQuota > 0) {
-            showGameNotification(`Incorrect guess. Attempt lost. Starting new ride...`, 'warning', 2000); 
+            //showGameNotification(`Incorrect guess. Attempt lost. Starting new ride...`, 'warning', 2000); 
             setTimeout(() => { 
                 // Start a new RIDE, not a whole new ATTEMPT. This carries over remaining chips.
                 startNewRideSequence(); 
@@ -1020,7 +1072,7 @@ function campaignProcessRoundResults(drawnCard) {
         } else {
             // Last attempt has been used. Check if they met the quota with remaining chips.
             if (campaignPlayer.chips >= currentQuota) {
-                showGameNotification(`Lost round on last attempt but MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000);
+                //showGameNotification(`Lost round on last attempt but MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000);
                 processSuccessfulQuotaCompletion("Lost Round - Last Attempt");
             } else {
                 const message = `Run Over. No attempts left and FAILED QUOTA of ${currentQuota}. Chips: ${campaignPlayer.chips}.`;
@@ -1047,13 +1099,17 @@ function processSuccessfulQuotaCompletion(fromAction) {
     // The profit for a level is the amount of chips earned *above* the quota target.
     const profitFromThisQuota = campaignPlayer.chips - currentQuota; 
     currentRunProfit += Math.max(0, profitFromThisQuota); 
+    animateValueDisplay('#campaignProfitValue', currentRunProfit, { animationClass: 'chips-win' });
     gamesPlayedInRun++; 
+    animateValueDisplay('#campaignQuotasClearedValue', gamesPlayedInRun, { animationClass: 'chips-win' });
     
-    showGameNotification(`SUCCESS! Quota of ${currentQuota} met with ${campaignPlayer.chips} chips! Profit banked: ${Math.max(0, profitFromThisQuota)}.`, 'success', 7000); // Keep - Major Event
+    // showGameNotification(`SUCCESS! Quota of ${currentQuota} met with ${campaignPlayer.chips} chips! Profit banked: ${Math.max(0, profitFromThisQuota)}.`, 'success', 7000); // Keep - Major Event
     
     campaignPreviousRideBet = 0; // Reset "last bet" memory for a clean start on the new quota.
     currentQuota = Math.floor(currentQuota * quotaIncreaseFactor);
+    animateValueDisplay('#campaignQuotaValue', currentQuota, { animationClass: 'chips-win' });
     runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL; 
+    animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-win', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
     
     console.log(`[CMP] Quota met. New Quota: ${currentQuota}. Run Profit: ${currentRunProfit}. Attempts for new quota level reset to: ${runAttemptsLeftForQuota}.`);
     // showGameNotification(`Next Quota Level: ${currentQuota}. Attempts for new level: ${runAttemptsLeftForQuota}. Starting Capital: ${baseStartingCapital}.`, 'info', 8000); // Optional, can be removed
@@ -1078,6 +1134,7 @@ function handleCashOutMidRide() {
 
     if (campaignPlayer.lastBet > 0) campaignPreviousRideBet = campaignPlayer.lastBet; 
     runAttemptsLeftForQuota--;
+    animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-loss', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
     campaignPlayer.lastBet = 0; 
     campaignGameInProgress = false; 
     if (runAttemptsLeftForQuota > 0) {
@@ -1086,7 +1143,7 @@ function handleCashOutMidRide() {
     } else {
         console.log("[CMP] Cashed out on last attempt.");
         if (campaignPlayer.chips >= currentQuota) {
-            showGameNotification(`Cashed out on last attempt and MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000); // Keep major event
+            //showGameNotification(`Cashed out on last attempt and MET QUOTA! Chips: ${campaignPlayer.chips}.`, 'success', 6000); // Keep major event
             processSuccessfulQuotaCompletion("Cash Out - Last Attempt");
         } else {
             const message = `Run Over. Cashed out on last attempt but FAILED QUOTA of ${currentQuota}. Chips: ${campaignPlayer.chips}.`;

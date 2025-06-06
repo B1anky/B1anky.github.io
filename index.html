@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bus or Bust</title>
+  <link rel="icon" type="image/svg+xml" href="icon.png">
   <script>
     (function() {
       const knownThemes = ["neon", "light", "dark-standard", "casino-green"]; // Must match availableThemes in classic-mode.js
@@ -133,6 +134,12 @@
       color: var(--ncc-accent);
       letter-spacing: 1px;
       text-shadow: 0 0 8px var(--ncc-accent);
+      display: flex;
+      align-items: center;
+    }
+    .game-title img {
+      height: 40px; /* Adjust height as needed */
+      width: auto;
     }
     .header-controls {
       display: flex;
@@ -422,6 +429,7 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 10px;
+      margin-top: 30px;
       margin-bottom: 10px;
       width: 100%;
     }
@@ -821,6 +829,11 @@
       text-shadow: 0 0 12px var(--ncc-accent), 0 0 20px var(--ncc-accent2);
       margin-bottom: 3rem;
     }
+    .menu-title img {
+        max-width: 90%;
+        width: 450px; /* Adjust as needed */
+        height: auto;
+    }
     .menu-options {
       display: flex;
       flex-direction: column; /* Stack buttons vertically */
@@ -941,7 +954,7 @@
     }
 
     .campaign-mode-left-panel {
-      background-color: #0D0D17; /* Very dark background, like Balatro's left panel */
+      background-color: var(--ncc-panel); /* USE THEME VARIABLE for consistency */
       padding: 20px;
       border-right: 3px solid var(--ncc-border); /* Stronger border */
       box-shadow: 5px 0 15px rgba(0,0,0,0.3);
@@ -1006,6 +1019,19 @@
       line-height: 1.1;
       text-shadow: 0 0 10px rgba(var(--ncc-accent-rgb),0.7), 0 0 20px rgba(var(--ncc-accent-rgb),0.4);
       /* Add a subtle glow matching the accent */
+      transition: color 0.4s ease-out, transform 0.4s ease-out, text-shadow 0.4s ease-out;
+    }
+
+    .chips-block .stat-block-value.chips-win {
+        color: var(--ncc-accent3) !important;
+        transform: scale(1.15);
+        text-shadow: 0 0 15px rgba(var(--ncc-accent3-rgb), 0.8);
+    }
+
+    .chips-block .stat-block-value.chips-loss {
+        color: var(--ncc-error) !important;
+        transform: scale(0.9);
+        text-shadow: 0 0 15px rgba(var(--ncc-error-rgb), 0.8);
     }
 
     /* QUOTA BLOCK & ATTEMPTS BLOCK */
@@ -1103,6 +1129,9 @@
         font-size: 1rem;
         color: var(--ncc-text2);
     }
+    .run-over-summary {
+        animation: fade-in-slow 0.8s ease-in forwards;
+    }
     /* === End of Campaign Mode: Left Panel (Balatro Inspired) - REVISED === */
 
     /* === Deck Active/Inactive States === */
@@ -1129,6 +1158,279 @@
         /* Optionally, reduce shadow for inactive state */
         box-shadow: 0 0 10px 0 var(--ncc-text2), var(--ncc-shadow); 
     }
+
+    .player-slider-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      padding: 0; /* No side padding here */
+      box-sizing: border-box;
+      margin-top: 10px; /* Space between input and slider */
+      margin-bottom: 20px; /* More space below slider */
+    }
+
+    .player-slider-wrapper {
+      position: relative;
+      width: 100%;
+      height: 30px; /* Provide space for labels above */
+      display: flex;
+      align-items: center;
+      /* Padding is removed. The slider input will now fill this entire wrapper. */
+    }
+
+    .slider-notches-container {
+      position: absolute;
+      /* KEY FIX: Inset container by thumb radius (22px / 2 = 11px) on each side. */
+      left: 11px;
+      right: 11px;
+      height: 100%;
+      top: 0;
+      pointer-events: none; /* Allows clicks to go through to the slider */
+    }
+
+    .slider-notch {
+      position: absolute;
+      width: 2px;
+      height: 8px; /* Height of the notch mark */
+      background-color: var(--ncc-accent); /* Make notches brighter */
+      transform: translateX(-50%);
+      top: 50%; /* Center vertically in the container */
+      margin-top: -4px; /* Adjust for own height to sit on the track */
+      z-index: 1; /* Position above the track's pseudo-element if one existed, but below thumb */
+    }
+
+    .slider-notch-label {
+      position: absolute;
+      bottom: 25px; /* Position labels above the slider */
+      transform: translateX(-50%);
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--ncc-accent3);
+      background-color: var(--ncc-panel);
+      padding: 2px 5px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+
+    .slider-notches-container.visible .slider-notch-label {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none; /* Override default look */
+      appearance: none;
+      position: relative; /* Establish stacking context for z-index to work */
+      width: 100%; /* Full width of its container */
+      height: 8px; /* Slider track height */
+      background: var(--ncc-card); /* Track color */
+      border-radius: 5px;
+      border: 1px solid var(--ncc-border);
+      outline: none;
+      opacity: 0.9;
+      transition: opacity .2s;
+      cursor: pointer;
+      z-index: 2; /* Ensure thumb is rendered above notches */
+    }
+
+    input[type="range"]:hover {
+      opacity: 1;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px; /* Thumb width */
+      height: 22px; /* Thumb height */
+      background: var(--ncc-accent); /* Thumb color */
+      border-radius: 50%; /* Circular thumb */
+      border: 2px solid var(--ncc-panel);
+      cursor: pointer;
+      box-shadow: 0 0 5px rgba(var(--ncc-accent-rgb), 0.7);
+      margin-top: -8px; /* Correct thumb position vertically */
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: var(--ncc-accent);
+      border-radius: 50%;
+      border: 2px solid var(--ncc-panel);
+      cursor: pointer;
+      box-shadow: 0 0 5px rgba(var(--ncc-accent-rgb), 0.7);
+    }
+
+    input[type="range"]:focus {
+        box-shadow: 0 0 8px rgba(var(--ncc-accent-rgb), 0.5);
+    }
+
+    input[type="range"]:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    input[type="range"]:disabled::-webkit-slider-thumb {
+        background: var(--ncc-text2);
+    }
+
+    input[type="range"]:disabled::-moz-range-thumb {
+        background: var(--ncc-text2);
+    }
+
+    /* === Round Win/Loss Animations === */
+    @keyframes win-glow {
+      0% {
+        box-shadow: var(--ncc-shadow);
+        border-color: var(--ncc-border);
+      }
+      50% {
+        box-shadow: 0 0 25px 8px rgba(var(--ncc-accent3-rgb), 0.8), 0 4px 12px 0 rgba(var(--ncc-accent3-rgb),0.4);
+        border-color: var(--ncc-accent3);
+      }
+      100% {
+        box-shadow: var(--ncc-shadow);
+        border-color: var(--ncc-border);
+      }
+    }
+
+    @keyframes lose-shake {
+      0% { transform: translateX(0); box-shadow: var(--ncc-shadow); border-color: var(--ncc-border); }
+      10%, 90% { transform: translateX(-5px); }
+      20%, 80% { transform: translateX(5px); }
+      30%, 50%, 70% { transform: translateX(-3px); box-shadow: 0 0 25px 8px rgba(var(--ncc-error-rgb), 0.8); border-color: var(--ncc-error); }
+      40%, 60% { transform: translateX(3px); }
+      100% { transform: translateX(0); box-shadow: var(--ncc-shadow); border-color: var(--ncc-border); }
+    }
+
+    .round-win-animation {
+      animation: win-glow 1s ease-in-out;
+    }
+
+    .round-lose-animation {
+      animation: lose-shake 0.8s ease-in-out;
+    }
+
+    @keyframes fade-in-slow {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fade-out-fast {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+
+    .fade-out-on-run-end {
+        animation: fade-out-fast 0.5s ease-out forwards;
+        pointer-events: none; /* Prevent interacting with fading elements */
+    }
+
+    .fade-in-on-run-start {
+        animation: fade-in-slow 0.6s 0.2s ease-out forwards;
+        opacity: 0; /* Start transparent before animation */
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001; /* Above game notification */
+      animation: fade-in-slow 0.3s ease-in forwards;
+    }
+
+    .modal-content {
+      background: var(--ncc-panel);
+      padding: 2.5rem;
+      border-radius: var(--ncc-radius);
+      border: 2px solid var(--ncc-border);
+      box-shadow: 0 0 25px 5px rgba(var(--ncc-accent-rgb), 0.5);
+      width: 90%;
+      max-width: 600px;
+      position: relative;
+      text-align: center;
+    }
+
+    .modal-content h2 {
+      color: var(--ncc-accent);
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
+
+    .modal-content p {
+      color: var(--ncc-text);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .modal-content .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: 1px solid var(--ncc-text2);
+      color: var(--ncc-text2);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      line-height: 24px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-content .close-btn:hover {
+      background-color: var(--ncc-card);
+      color: var(--ncc-text);
+      border-color: var(--ncc-accent);
+    }
+
+    .tutorial-navigation {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tutorial-navigation button {
+      background: var(--ncc-accent2);
+      color: var(--ncc-bg);
+      border: 2px solid var(--ncc-accent2);
+      border-radius: var(--ncc-radius);
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tutorial-navigation button:hover {
+      background: var(--ncc-accent);
+      border-color: var(--ncc-accent);
+    }
+
+    .tutorial-navigation button:disabled {
+        background: var(--ncc-card);
+        color: var(--ncc-text2);
+        border-color: var(--ncc-text2);
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    #tutorialStepCounter {
+      color: var(--ncc-text2);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -1138,17 +1440,18 @@
   </div>
 
   <div id="mainMenuContainer">
-    <h1 class="menu-title">Bus or Bust</h1>
+    <h1 class="menu-title"><img src="logo.png" alt="Bus or Bust"></h1>
     <div class="menu-options">
-      <button id="playClassicButton" class="menu-button">Play Classic Mode</button>
+      <!-- <button id="playClassicButton" class="menu-button">Play Classic Mode</button> -->
       <button id="playCampaignButton" class="menu-button">Play Campaign Mode</button>
+      <button id="tutorialButton" class="menu-button">How to Play</button>
       <button id="optionsButton" class="menu-button" disabled>Options (Soon)</button>
     </div>
   </div>
 
   <div id="gameViewContainer" style="display: none; flex-direction: column; flex: 1;">
     <header>
-      <div class="game-title">Bus or Bust</div>
+      <div class="game-title"><img src="name.png" alt="Bus or Bust"></div>
       <div class="header-controls">
         <button id="backToMenuButton">Back to Main Menu</button>
         <button id="resetPlayersButton">Reset</button>
@@ -1168,7 +1471,7 @@
         <!-- Campaign Player card will go here -->
       </section>
       <section class="panel game-board-panel" id="gameBoardPanel">
-        <div id="campaignStatusDisplay" style="display: none; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--ncc-card); border-radius: var(--ncc-radius); border: 1px solid var(--ncc-accent3); text-align: center; font-size: 1rem;">Campaign Status: Quota ... Capital ...</div>
+        <!-- <div id="campaignStatusDisplay" style="display: none; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--ncc-card); border-radius: var(--ncc-radius); border: 1px solid var(--ncc-accent3); text-align: center; font-size: 1rem;">Campaign Status: Quota ... Capital ...</div> -->
         <div class="round-info" id="roundInfo">Round info here</div>
         <div class="round-multiplier" id="roundMultiplier">Multiplier info here</div>
         <div class="deck" id="deck" data-count="0"></div>
@@ -1216,12 +1519,24 @@
     </main>
   </div> <!-- Closing gameViewContainer -->
 
-  <!-- Inline scripts removed, now using external classic-mode.js and main.js -->
+  <div id="tutorialModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2 id="tutorialTitle"></h2>
+      <p id="tutorialText"></p>
+      <div class="tutorial-navigation">
+        <button id="tutorialPrevButton">Previous</button>
+        <span id="tutorialStepCounter"></span>
+        <button id="tutorialNextButton">Next</button>
+      </div>
+      <button id="tutorialCloseButton" class="close-btn">&times;</button>
+    </div>
+  </div>
 
   <!-- Load JavaScript files -->
   <script src="core-game-rules.js"></script>
   <script src="classic-mode.js"></script>
   <script src="campaign-mode.js"></script>
+  <script src="tutorial.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

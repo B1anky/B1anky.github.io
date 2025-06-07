@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (playCampaignButton) {
         playCampaignButton.addEventListener('click', () => {
             showGameView('campaign');
-            initializeCampaignMode();
+            setupCampaignMode();
         });
     }
 

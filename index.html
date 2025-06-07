@@ -1463,6 +1463,104 @@
       max-width: 600px;
       position: relative;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-content.shop-modal-content {
+        max-width: 800px; /* Wider modal for two-column layout */
+    }
+
+    .shop-layout-container {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1.5rem;
+        margin-bottom: 2rem;
+        flex-grow: 1; /* Allow container to fill space */
+        min-height: 350px; /* Give it some space to layout */
+    }
+
+    #shopItemsContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        flex: 1; /* Take up left side */
+        overflow-y: auto; /* Allow scrolling if many items */
+        padding-right: 1rem;
+    }
+
+    .shop-item {
+        background: var(--ncc-card);
+        padding: 1rem;
+        border-radius: var(--ncc-radius);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        text-align: left;
+    }
+    
+    .shop-item:hover {
+        border-color: var(--ncc-accent2);
+        transform: translateY(-2px);
+    }
+
+    .shop-item.selected {
+        border-color: var(--ncc-accent);
+        box-shadow: 0 0 15px rgba(var(--ncc-accent-rgb), 0.5);
+    }
+    
+    .shop-item-info h3 {
+        margin: 0 0 0.5rem 0; 
+        color: var(--ncc-accent2);
+    }
+
+    .shop-item-info p {
+        margin: 0; 
+        font-size: 0.9rem; 
+        color: var(--ncc-text2);
+        line-height: 1.4; /* Tighter line height for shop descriptions */
+        margin-bottom: 0.5rem; /* Space between description and bonus text */
+    }
+    
+    .shop-item-bonus {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: var(--ncc-accent3);
+    }
+
+    #shopInvestmentControls {
+        flex: 1; /* Take up right side */
+        background: var(--ncc-card);
+        border-radius: var(--ncc-radius);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--ncc-border);
+    }
+    
+    #investmentItemTitle {
+        color: var(--ncc-accent);
+        margin-top: 0;
+    }
+    #investmentItemDesc {
+        color: var(--ncc-text2);
+        font-size: 0.9rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    #shopInvestmentControls .player-bet-row,
+    #shopInvestmentControls .player-slider-row {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    #confirmInvestmentButton {
+        margin-top: 1.5rem;
+        padding: 0.6rem 1.5rem;
+        font-size: 1.1rem;
     }
 
     .modal-content h2 {
@@ -1841,6 +1939,183 @@
         margin-top: -1.5rem; /* Pull deck/cards up over multiplier's bottom margin */
       }
     }
+
+    .round-multiplier-display {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: var(--ncc-text2);
+      transition: all 0.3s ease-in-out;
+    }
+
+    .round-multiplier-display.upgraded {
+      color: var(--ncc-accent3);
+      text-shadow: 0 0 10px var(--ncc-accent3), 0 0 20px var(--ncc-accent3);
+      transform: scale(1.1);
+    }
+
+    .shop-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        border-bottom: 2px solid var(--ncc-card);
+    }
+    .shop-tab-button {
+        padding: 0.7rem 1.5rem;
+        border: none;
+        background: none;
+        color: var(--ncc-text2);
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.2s, background-color 0.2s;
+        border-radius: var(--ncc-radius) var(--ncc-radius) 0 0;
+        border-bottom: 2px solid transparent;
+        transform: translateY(2px);
+    }
+    .shop-tab-button:hover {
+        color: var(--ncc-accent);
+    }
+    .shop-tab-button.active {
+        color: var(--ncc-accent2);
+        background-color: var(--ncc-card);
+        border-bottom-color: var(--ncc-accent2);
+    }
+
+    .shop-tab-content {
+        display: none;
+        padding: 1.5rem 0;
+        animation: fade-in-slow 0.4s;
+    }
+    .shop-tab-content.active {
+        display: block;
+    }
+
+    .shop-items-horizontal-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .shop-item {
+        background: var(--ncc-card);
+        padding: 1rem;
+        border-radius: var(--ncc-radius);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        text-align: left;
+        flex-basis: 180px; /* Give items a base width */
+        flex-grow: 1;
+        max-width: 220px;
+    }
+    
+    .shop-item:hover {
+        border-color: var(--ncc-accent2);
+        transform: translateY(-2px);
+    }
+
+    .shop-item.selected {
+        border-color: var(--ncc-accent);
+        box-shadow: 0 0 15px rgba(var(--ncc-accent-rgb), 0.5);
+    }
+
+    .shop-item.compact {
+        flex-basis: auto;
+        flex-grow: 0;
+        padding: 0.8rem 1rem;
+        text-align: center;
+    }
+    .shop-item.compact h3 {
+        font-size: 1rem;
+        margin: 0;
+    }
+     .shop-item.compact .shop-item-bonus {
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+    
+    .shop-item-info h3 {
+        margin: 0 0 0.5rem 0; 
+        color: var(--ncc-accent2);
+    }
+
+    .shop-item-info p {
+        margin: 0; 
+        font-size: 0.9rem; 
+        color: var(--ncc-text2);
+        line-height: 1.4; /* Tighter line height for shop descriptions */
+        margin-bottom: 0.5rem; /* Space between description and bonus text */
+    }
+    
+    .shop-item-bonus {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: var(--ncc-accent3);
+    }
+
+    .mult-common-desc {
+        text-align: center;
+        color: var(--ncc-text2);
+        font-size: 0.95rem;
+        margin: 0 auto 1.5rem auto;
+        max-width: 80%;
+    }
+
+    #shopInvestmentControls {
+        /* This is now the bottom panel */
+        background: rgba(var(--ncc-card-rgb, var(--ncc-panel-rgb)), 0.5);
+        border-radius: var(--ncc-radius);
+        padding: 1rem;
+        margin-top: 1rem;
+        border: 1px solid var(--ncc-border);
+        animation: fade-in-slow 0.5s;
+    }
+    
+    #investmentItemTitle {
+        color: var(--ncc-accent);
+        margin-top: 0;
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+    }
+    #investmentItemDesc {
+        color: var(--ncc-text2);
+        font-size: 0.9rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    #shopInvestmentControls .player-bet-row,
+    #shopInvestmentControls .player-slider-row {
+        width: 100%;
+        max-width: 350px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #confirmInvestmentButton {
+        margin-top: 1rem;
+        padding: 0.6rem 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    .modal-content .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: 1px solid var(--ncc-text2);
+      color: var(--ncc-text2);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      line-height: 24px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
   </style>
 </head>
 <body>
@@ -1891,6 +2166,7 @@
         <!-- <div id="campaignStatusDisplay" style="display: none; margin-bottom: 0.5rem; padding: 0.5rem; background: var(--ncc-card); border-radius: var(--ncc-radius); border: 1px solid var(--ncc-accent3); text-align: center; font-size: 1rem;">Campaign Status: Quota ... Capital ...</div> -->
         <div class="round-info" id="roundInfo">Round info here</div>
         <div class="round-multiplier" id="roundMultiplier">Multiplier info here</div>
+        <div class="round-multiplier-display" id="roundMultiplierDisplay" style="display: none;"></div>
         
         <!-- New Central Stage for Campaign Mode -->
         <div id="campaignCentralStage" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
@@ -1937,6 +2213,54 @@
       </aside>
     </main>
   </div> <!-- Closing gameViewContainer -->
+
+  <div id="shopModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content shop-modal-content">
+      <h2 id="shopTitle">Capital Investments</h2>
+      <p>Select an upgrade, then use the slider to invest your profit.</p>
+      <div id="shopCurrentProfit" style="font-size: 1.5rem; color: var(--ncc-accent3); margin-bottom: 0;">
+        Available Profit: $0
+      </div>
+
+      <!-- TABS -->
+      <div class="shop-tabs">
+        <button class="shop-tab-button active" data-tab="money">$$$</button>
+        <button class="shop-tab-button" data-tab="mults">+Mult</button>
+      </div>
+
+      <!-- TAB CONTENT -->
+      <div class="shop-tab-content active" id="shop-tab-money">
+        <div class="shop-items-horizontal-container" id="shop-items-money">
+          <!-- Money items will be dynamically inserted here -->
+        </div>
+      </div>
+      <div class="shop-tab-content" id="shop-tab-mults">
+        <p class="mult-common-desc">Increase a Round's payout multiplier. Select an upgrade for more details.</p>
+        <div class="shop-items-horizontal-container" id="shop-items-mults">
+          <!-- Multiplier items will be dynamically inserted here -->
+        </div>
+      </div>
+      
+      <!-- COMMON INVESTMENT AREA -->
+      <div id="shopInvestmentControls" style="display: none;">
+          <h3 id="investmentItemTitle"></h3>
+          <p id="investmentItemDesc"></p>
+
+            <div class="player-bet-row">
+              <input type="number" id="shopInvestmentAmountInput" placeholder="Amount to spend" min="0">
+              <span class="bet-input-suffix"> profit</span>
+          </div>
+          <div class="player-slider-row">
+              <div class="player-slider-wrapper">
+                  <input type="range" id="shopInvestmentSlider" min="0" max="1000" step="100">
+              </div>
+          </div>
+          <button id="confirmInvestmentButton" class="menu-button">Invest</button>
+      </div>
+
+      <button id="shopContinueButton" class="menu-button" style="width: 100%; margin-top: auto;">Continue to Next Quota</button>
+    </div>
+  </div>
 
   <div id="tutorialModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
@@ -1993,7 +2317,9 @@
   <script src="core-game-rules.js"></script>
   <script src="classic-mode.js"></script>
   <script src="campaign-mode.js"></script>
+  <script src="shop.js"></script>
   <script src="tutorial.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
+

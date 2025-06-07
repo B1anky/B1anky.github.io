@@ -4,6 +4,15 @@ console.log("campaign-mode.js loaded");
 
 const ATTEMPTS_PER_QUOTA_LEVEL = 5; // User-defined number of attempts per quota level
 
+// NEW: Centralized state for data that persists across an entire campaign run.
+let campaignState = {
+    profit: 0, // Cumulative profit from successful quotas, used for shop
+    upgrades: {
+        startingChipsBonus: 0,
+        multiplierBonuses: [0, 0, 0, 0, 0] // Bonus for rounds 1-5
+    }
+};
+
 // Global variable to indicate which mode is active (or manage this via a more robust state manager later)
 // This will be set by main.js when a mode is selected.
 // let currentCampaignData = {}; // Example structure for campaign-specific state
@@ -12,12 +21,12 @@ const ATTEMPTS_PER_QUOTA_LEVEL = 5; // User-defined number of attempts per quota
 let campaignRunActive = false;
 // currentRunCapital is removed, chips are managed by campaignPlayer.chips per attempt
 let currentQuota = 0;
-let currentRunProfit = 0; // Cumulative profit from successful quota levels
+// let currentRunProfit = 0; // REPLACED by campaignState
 let gamesPlayedInRun = 0; // Number of quotas successfully cleared
 let runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL;
 let campaignGameInProgress = false;
 let campaignBetLockedForRide = false; // NEW: To lock bet after R1 draw of a ride sequence
-let campaignPreviousRideBet = 0; // QoL: Store the bet from the previous completed ride sequence
+let campaignPreviousBetPercentage = 0.5; // NEW: Store the last bet as a percentage of capital. Default to 50%.
 let isChipAnimationInProgress = false;
 
 const baseStartingCapital = 1000; // Capital for each new game attempt for a quota
@@ -42,6 +51,19 @@ let campaignGamePhase = PHASE_BETTING;
 // These multipliers can be upgraded in the shop during a run
 let campaignRunRoundMultipliers = {}; 
 let campaignRunBuffs = []; // For other passive or active buffs
+
+// NEW: Helper function to apply multiplier upgrades.
+function updateRunMultipliers() {
+    console.log("[CMP] Updating run multipliers with purchased bonuses.");
+    campaignRunRoundMultipliers = { ...BASE_ROUND_MULTIPLIERS };
+    for (let i = 0; i < 5; i++) {
+        // Ensure bonus exists before adding it
+        if (campaignState.upgrades.multiplierBonuses[i]) {
+            campaignRunRoundMultipliers[i + 1] += campaignState.upgrades.multiplierBonuses[i];
+        }
+    }
+    console.log("[CMP] Final multipliers for run:", campaignRunRoundMultipliers);
+}
 
 // --- CAMPAIGN LIFECYCLE ---
 function initializeCampaignMode() {
@@ -109,11 +131,16 @@ function startNewCampaignRun() {
     });
 
     campaignRunActive = true;
-    currentRunProfit = 0;
+    // currentRunProfit = 0; // REPLACED by campaignState
+    campaignState.profit = 0;
+    campaignState.upgrades.startingChipsBonus = 0;
+    campaignState.upgrades.multiplierBonuses = [0, 0, 0, 0, 0];
+
     gamesPlayedInRun = 0;
     runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL; // Use constant here
     
-    campaignRunRoundMultipliers = { ...BASE_ROUND_MULTIPLIERS }; 
+    updateRunMultipliers(); // Apply base and upgraded multipliers
+
     campaignRunBuffs = [];
 
     currentQuota = baseInitialQuota;
@@ -128,8 +155,8 @@ function startNewCampaignRun() {
 // Called when starting a new "life"/run attempt for the current quota level (e.g. new run, or new QUOTA LEVEL)
 // This RESETS chips to baseStartingCapital.
 function startNewAttemptForCurrentQuota() {
-    console.log(`[CMP] Starting New Full Attempt for Quota: ${currentQuota}. Previous Ride Bet was: ${campaignPreviousRideBet}`);
-    campaignPlayer.chips = baseStartingCapital;
+    console.log(`[CMP] Starting New Full Attempt for Quota: ${currentQuota}. Previous Bet Percentage was: ${campaignPreviousBetPercentage}`);
+    campaignPlayer.chips = baseStartingCapital + campaignState.upgrades.startingChipsBonus;
     animateChipsDisplay(campaignPlayer.chips, 'win'); // Animate chips resetting
     campaignBetLockedForRide = false; 
     campaignCurrentRound = 1;
@@ -137,10 +164,12 @@ function startNewAttemptForCurrentQuota() {
     campaignDrawnCards = [];
     campaignGamePhase = PHASE_BETTING;
     campaignGameInProgress = true; 
-    // Set lastBet: Use previous ride's bet if affordable, else 1 (if chips > 0), else 0.
-    campaignPlayer.lastBet = campaignPreviousRideBet > 0 && campaignPreviousRideBet <= campaignPlayer.chips ? campaignPreviousRideBet : (campaignPlayer.chips > 0 ? 1 : 0);
+    // NEW LOGIC: Calculate bet based on percentage
+    const newBet = Math.round(campaignPlayer.chips * campaignPreviousBetPercentage);
+    // Ensure bet is at least 1 if player has chips, and not more than they have.
+    campaignPlayer.lastBet = Math.min(campaignPlayer.chips, Math.max(campaignPlayer.chips > 0 ? 1 : 0, newBet));
     campaignPlayer.currentChoice = undefined;
-    console.log(`[CMP] Full Attempt Started. Chips: ${campaignPlayer.chips}. Initial Bet: ${campaignPlayer.lastBet}.`);
+    console.log(`[CMP] Full Attempt Started. Chips: ${campaignPlayer.chips}. Initial Bet from %: ${campaignPlayer.lastBet}.`);
     updateCampaignUI(true); // Force a re-render of the left panel for the new quota
 }
 
@@ -151,14 +180,17 @@ function startNewRideSequence() {
         console.warn("[CMP] startNewRideSequence called but run is not active. Aborting.");
         return;
     }
-    console.log(`[CMP] Starting New Ride Sequence. Chips: ${campaignPlayer.chips}. Attempts left: ${runAttemptsLeftForQuota}. Prev Ride Bet: ${campaignPreviousRideBet}`);
+    console.log(`[CMP] Starting New Ride Sequence. Chips: ${campaignPlayer.chips}. Attempts left: ${runAttemptsLeftForQuota}. Prev Bet %: ${campaignPreviousBetPercentage}`);
     campaignBetLockedForRide = false; 
     campaignCurrentRound = 1;
     campaignDeck = createInitialDeck();
     campaignDrawnCards = [];
     campaignGamePhase = PHASE_BETTING;
     campaignGameInProgress = true; 
-    campaignPlayer.lastBet = campaignPreviousRideBet > 0 && campaignPreviousRideBet <= campaignPlayer.chips ? campaignPreviousRideBet : (campaignPlayer.chips > 0 ? 1 : 0); 
+    // NEW LOGIC: Calculate bet based on percentage
+    const newBet = Math.round(campaignPlayer.chips * campaignPreviousBetPercentage);
+    // Ensure bet is at least 1 if player has chips, and not more than they have.
+    campaignPlayer.lastBet = Math.min(campaignPlayer.chips, Math.max(campaignPlayer.chips > 0 ? 1 : 0, newBet)); 
     campaignPlayer.currentChoice = undefined;
     updateCampaignUI(); // This will call updateDeckClickableState()
     isChipAnimationInProgress = false;
@@ -301,6 +333,8 @@ function displayRunOverSummary() {
     document.getElementById('roundMultiplier').style.display = 'none';
     document.getElementById('deck').style.display = 'none';
     document.getElementById('campaignCentralStage').style.display = 'none';
+    const multiplierDisplay = document.getElementById('roundMultiplierDisplay');
+    if (multiplierDisplay) multiplierDisplay.style.display = 'none';
 
     // Check if a summary already exists to prevent duplicates
     if (document.getElementById('runOverSummaryPanel')) return;
@@ -316,7 +350,7 @@ function displayRunOverSummary() {
         runOverSummary.innerHTML = `
             <div class="stat-block final-summary-block">
                 <div class="stat-block-label">CAMPAIGN OVER</div>
-                <div class="run-info-item"><span class="run-info-label">Final Profit:</span> <span class="run-info-value profit-value">${currentRunProfit}</span></div>
+                <div class="run-info-item"><span class="run-info-label">Final Profit:</span> <span class="run-info-value profit-value">${campaignState.profit}</span></div>
                 <div class="run-info-item"><span class="run-info-label">Quotas Cleared:</span> <span class="run-info-value">${gamesPlayedInRun}</span></div>
                 <div class="stat-block-message">Busted!</div>
             </div>
@@ -399,7 +433,7 @@ function updateCampaignPlayerDisplay() {
         runInfoBlock.className = 'stat-block run-info-block';
         runInfoBlock.innerHTML = `
             <div class="stat-block-label">RUN PROGRESS</div>
-            <div class="run-info-item"><span class="run-info-label">Profit:</span> <span class="run-info-value profit-value" id="campaignProfitValue">${currentRunProfit}</span></div>
+            <div class="run-info-item"><span class="run-info-label">Profit:</span> <span class="run-info-value profit-value" id="campaignProfitValue">${campaignState.profit}</span></div>
             <div class="run-info-item"><span class="run-info-label">Quotas Cleared:</span> <span class="run-info-value" id="campaignQuotasClearedValue">${gamesPlayedInRun}</span></div>
         `;
         balatroStatsWrapper.appendChild(runInfoBlock);
@@ -550,7 +584,15 @@ function updateCampaignPlayerDisplay() {
 
         if (campaignPlayer.lastBet !== newBet) {
             campaignPlayer.lastBet = newBet;
-            console.log(`[CMP] Bet input changed (oninput). New campaignPlayer.lastBet: ${campaignPlayer.lastBet}`);
+            
+            // NEW: Update the percentage
+            if (campaignPlayer.chips > 0) {
+                campaignPreviousBetPercentage = newBet / campaignPlayer.chips;
+            } else {
+                campaignPreviousBetPercentage = 0;
+            }
+
+            console.log(`[CMP] Bet input changed (oninput). New campaignPlayer.lastBet: ${campaignPlayer.lastBet}. New Percentage: ${campaignPreviousBetPercentage}`);
             
             updateCampaignGameButtons(); 
             updateDeckClickableState(); // ADDED: Update deck state when bet changes
@@ -673,21 +715,37 @@ function updateCampaignRoundInfo() {
     console.log("updateCampaignRoundInfo called");
     const roundInfoEl = document.getElementById('roundInfo');
     const multiplierInfoEl = document.getElementById('roundMultiplier');
-    if (!roundInfoEl || !multiplierInfoEl) return;
+    const multiplierDisplayEl = document.getElementById('roundMultiplierDisplay');
+    if (!roundInfoEl || !multiplierInfoEl || !multiplierDisplayEl) return;
 
     if (!campaignRunActive) {
-        roundInfoEl.textContent = `Run Over! Final Profit: ${currentRunProfit}. Games Cleared: ${gamesPlayedInRun}.`;
+        roundInfoEl.textContent = `Run Over! Final Profit: ${campaignState.profit}. Games Cleared: ${gamesPlayedInRun}.`;
         multiplierInfoEl.textContent = 'Start a new campaign from the main menu.';
+        multiplierDisplayEl.style.display = 'none';
         return;
     }
     if (!campaignGameInProgress && campaignRunActive) {
         roundInfoEl.textContent = `Sequence ended. Waiting for next action.`;
         multiplierInfoEl.textContent = `Attempts for Quota ${currentQuota}: ${runAttemptsLeftForQuota}. Chips: ${campaignPlayer.chips}`;
+        multiplierDisplayEl.style.display = 'none';
         return;
     }
 
+    // If we are in an active game, show the multiplier display
+    multiplierDisplayEl.style.display = 'block';
+
     let roundText = `Round ${campaignCurrentRound}: `;
     let multText = `(Current Bet: ${campaignPlayer.lastBet}) `;
+
+    // Update the visual multiplier
+    const currentMultiplier = campaignRunRoundMultipliers[campaignCurrentRound];
+    const baseMultiplier = BASE_ROUND_MULTIPLIERS[campaignCurrentRound];
+    multiplierDisplayEl.textContent = `x${currentMultiplier.toFixed(1)}`;
+    if (currentMultiplier > baseMultiplier) {
+        multiplierDisplayEl.classList.add('upgraded');
+    } else {
+        multiplierDisplayEl.classList.remove('upgraded');
+    }
 
     if (campaignGamePhase === PHASE_BETTING) {
         // Determine round-specific question text first
@@ -856,7 +914,7 @@ function updateCashOutButtonState() {
     
     if (canCashOut) {
         const cashOutMultiplier = campaignRunRoundMultipliers[campaignCurrentRound - 1] || BASE_ROUND_MULTIPLIERS[campaignCurrentRound - 1];
-        const potentialCashOutValue = campaignPlayer.lastBet * cashOutMultiplier;
+        const potentialCashOutValue = Math.ceil(campaignPlayer.lastBet * cashOutMultiplier);
         cashOutButton.textContent = `Cash Out (+${potentialCashOutValue} chips)`;
         cashOutButton.style.display = 'block';
         cashOutButton.disabled = false;
@@ -1008,12 +1066,11 @@ function campaignProcessRoundResults(drawnCard) {
         // showGameNotification(`Won Round ${campaignCurrentRound}!`, 'success', 2000);
         if (campaignCurrentRound === 5) { 
             const multiplier = campaignRunRoundMultipliers[5] || BASE_ROUND_MULTIPLIERS[5];
-            const winnings = campaignPlayer.lastBet * multiplier; 
+            const winnings = Math.ceil(campaignPlayer.lastBet * multiplier); 
             campaignPlayer.chips += winnings; 
             animateChipsDisplay(campaignPlayer.chips, 'win');
             console.log(`[CMP] R5 WIN! Initial Bet: ${campaignPlayer.lastBet}, Multiplier: ${multiplier}, Total Added: ${winnings}. Final Chips: ${campaignPlayer.chips}`);
             // showGameNotification(`SUCCESS! Rode the Bus! Chips: ${campaignPlayer.chips}.`, 'success', 4000); // R5 win summary
-            if (rideEndingBet > 0) campaignPreviousRideBet = rideEndingBet;
             runAttemptsLeftForQuota--;
             animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-loss', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
             console.log(`[CMP] R5 Win sequence ended. Attempt consumed. Attempts left: ${runAttemptsLeftForQuota}`);
@@ -1050,7 +1107,6 @@ function campaignProcessRoundResults(drawnCard) {
         }
 
         // If they have chips, but lost the ride, it consumes an attempt.
-        if (rideEndingBet > 0) campaignPreviousRideBet = rideEndingBet;
         runAttemptsLeftForQuota--;
         animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-loss', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
         console.log(`[CMP] Incorrect guess. Attempt consumed. Attempts left: ${runAttemptsLeftForQuota}`);
@@ -1090,23 +1146,39 @@ function processSuccessfulQuotaCompletion(fromAction) {
     console.log(`[CMP] processSuccessfulQuotaCompletion called from: ${fromAction}. Player Chips: ${campaignPlayer.chips}, Quota: ${currentQuota}`);
     // The profit for a level is the amount of chips earned *above* the quota target.
     const profitFromThisQuota = campaignPlayer.chips - currentQuota; 
-    currentRunProfit += Math.max(0, profitFromThisQuota); 
-    animateValueDisplay('#campaignProfitValue', currentRunProfit, { animationClass: 'chips-win' });
+
+    // Use campaignState.profit to persist across shop
+    if (profitFromThisQuota > 0) {
+        campaignState.profit += profitFromThisQuota;
+        showGameNotification(`Quota Cleared! You made a profit of $${profitFromThisQuota}!`, 'success', 4000);
+    } else {
+        showGameNotification(`Quota Cleared! You broke even.`, 'success', 4000);
+    }
+    
     gamesPlayedInRun++; 
     animateValueDisplay('#campaignQuotasClearedValue', gamesPlayedInRun, { animationClass: 'chips-win' });
     
-    // showGameNotification(`SUCCESS! Quota of ${currentQuota} met with ${campaignPlayer.chips} chips! Profit banked: ${Math.max(0, profitFromThisQuota)}.`, 'success', 7000); // Keep - Major Event
-    
-    campaignPreviousRideBet = 0; // Reset "last bet" memory for a clean start on the new quota.
+    // Instead of starting the next round, show the shop.
+    // The shop will then call startNextCampaignRound()
+    showShop();
+}
+
+// NEW function, to be called from the shop to proceed.
+function startNextCampaignRound() {
+    console.log("Proceeding to the next quota level from shop.");
+
+    // Recalculate multipliers to include newly purchased upgrades
+    updateRunMultipliers();
+
+    campaignPreviousBetPercentage = 0.5; // Reset to 50% for a clean start on new quota
     currentQuota = Math.floor(currentQuota * quotaIncreaseFactor);
     animateValueDisplay('#campaignQuotaValue', currentQuota, { animationClass: 'chips-win' });
     runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL; 
     animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-win', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
     
-    console.log(`[CMP] Quota met. New Quota: ${currentQuota}. Run Profit: ${currentRunProfit}. Attempts for new quota level reset to: ${runAttemptsLeftForQuota}.`);
-    // showGameNotification(`Next Quota Level: ${currentQuota}. Attempts for new level: ${runAttemptsLeftForQuota}. Starting Capital: ${baseStartingCapital}.`, 'info', 8000); // Optional, can be removed
+    console.log(`[CMP] New Quota: ${currentQuota}. Run Profit: ${campaignState.profit}. Attempts for new quota level reset to: ${runAttemptsLeftForQuota}.`);
     
-    startNewAttemptForCurrentQuota(); // This calls updateCampaignUI(), which calls updateDeckClickableState()
+    startNewAttemptForCurrentQuota();
 }
 
 function handleCashOutMidRide() {
@@ -1117,14 +1189,13 @@ function handleCashOutMidRide() {
     }
 
     const cashOutMultiplier = campaignRunRoundMultipliers[campaignCurrentRound - 1] || BASE_ROUND_MULTIPLIERS[campaignCurrentRound - 1];
-    const winningsFromCashOut = campaignPlayer.lastBet * cashOutMultiplier;
+    const winningsFromCashOut = Math.ceil(campaignPlayer.lastBet * cashOutMultiplier);
     campaignPlayer.chips += winningsFromCashOut; 
     animateChipsDisplay(campaignPlayer.chips, 'win');
     
     console.log(`[CMP] Cashed out mid-ride at R${campaignCurrentRound-1}. Bet was ${campaignPlayer.lastBet}, Won: ${winningsFromCashOut}. New Chips: ${campaignPlayer.chips}`);
     // showGameNotification(`Cashed out at R${campaignCurrentRound-1} for ${winningsFromCashOut}. Total chips: ${campaignPlayer.chips}.`, 'info', 4000);
 
-    if (campaignPlayer.lastBet > 0) campaignPreviousRideBet = campaignPlayer.lastBet; 
     runAttemptsLeftForQuota--;
     animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-loss', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
     campaignPlayer.lastBet = 0; 
@@ -1165,15 +1236,18 @@ function playerCompletesQuota() {
 
     // Since button is only enabled if chips >= quota, this condition is effectively met.
     // The player's last bet from the previous sequence should NOT carry over to a new quota level.
-    // if (campaignPlayer.lastBet > 0) campaignPreviousRideBet = campaignPlayer.lastBet; 
     processSuccessfulQuotaCompletion("playerCompletesQuota");
 }
 
 function prepareCampaignModeForExit() {
     console.log("Preparing Campaign Mode for exit. Resetting run state.");
     campaignRunActive = false;
-    currentRunProfit = 0;
+    campaignState.profit = 0;
+    campaignState.upgrades.startingChipsBonus = 0;
+    campaignState.upgrades.multiplierBonuses = [0, 0, 0, 0, 0];
     gamesPlayedInRun = 0;
+    runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL;
+    currentQuota = baseInitialQuota;
 
     // Reset current game variables as well
     campaignPlayer.chips = 0;
@@ -1186,6 +1260,8 @@ function prepareCampaignModeForExit() {
     campaignCurrentRound = 1;
     campaignGamePhase = PHASE_BETTING;
     campaignGameInProgress = false;
+    campaignBetLockedForRide = false;
+    campaignPreviousBetPercentage = 0.5;
     
     // campaignRunRoundMultipliers = { ...BASE_ROUND_MULTIPLIERS }; // Reset when new run starts
     // campaignRunBuffs = []; // Reset when new run starts

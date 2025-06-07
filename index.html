@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Bus or Bust">
   <link rel="apple-touch-icon" href="icon.png">
+  <link rel="stylesheet" href="shop.css">
   <script>
     (function() {
       const knownThemes = ["neon", "light", "dark-standard", "casino-green"]; // Must match availableThemes in classic-mode.js
@@ -270,17 +271,18 @@
       padding: 1rem;
       display: flex;
       flex-direction: column;
-      min-width: 0;
+      width: 100%; /* Ensure panel takes full width of its container */
     }
     .game-board-panel {
       align-items: center;
       justify-content: flex-start;
-      min-height: 400px;
+      min-height: 300px;
       display: flex;
       flex-direction: column;
       gap: 1rem;
       position: relative;
       padding: 1rem;
+      min-width: 0; /* Prevents panel from overflowing its grid container */
     }
     .round-info, .round-multiplier {
       background: var(--ncc-card);
@@ -587,7 +589,7 @@
       min-width: 220px;
       max-width: 350px;
       gap: 1rem;
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: stretch;
     }
@@ -716,10 +718,12 @@
       .panel {
         min-width: 0;
         max-width: 100%;
+        max-height: 100%;
       }
       .players-panel {
         flex-direction: row;
         flex-wrap: wrap;
+        max-height: 100%;
         gap: 0.7rem;
         justify-content: flex-start;
         align-items: stretch;
@@ -756,7 +760,7 @@
       main {
         padding: 0.5rem;
         gap: 0.7rem;
-        flex: 1; /* Allow main to fill space */
+        flex: 1;
         overflow-y: auto; /* Allow ONLY main content to scroll if absolutely necessary */
       }
       .panel {
@@ -766,16 +770,13 @@
       .players-panel {
         flex-direction: column;
         flex-wrap: nowrap;
-        gap: 0.7rem;
         max-width: 100%;
-        margin-bottom: 0.7rem;
-        margin-right: 0;
       }
       .player-controls {
         min-width: 0;
         width: 100%;
         max-width: 100%;
-        margin-bottom: 0.7rem;
+        margin-bottom: 0.0rem;
         margin-right: 0;
       }
       .player-header-row {
@@ -797,7 +798,7 @@
         gap: 0.3rem;
       }
       .game-board-panel {
-        min-height: unset; /* Remove fixed min-height on mobile */
+        min-height: unset;
         gap: 0.7rem;
         padding: 0.2rem;
       }
@@ -807,12 +808,12 @@
         font-size: 1rem;
       }
       .drawn-cards {
-        min-height: 60px;
+        height: 75px;
         gap: 0.2rem;
       }
       .card {
-        width: 38px;
-        height: 55px;
+        width: 55px;
+        height: 75px;
         font-size: 0.8rem;
       }
       .round-info, .round-multiplier {
@@ -861,6 +862,9 @@
     }
     #gameNotification .message {
       margin-bottom: 0.5rem;
+    }
+    #gameNotification {
+      padding: 1.5rem 1.5rem 1.5rem 1.5rem; /* Add padding to the parent to prevent occlusion */
     }
     #gameNotification .close-btn {
       background: none;
@@ -982,11 +986,11 @@
     .game-board-panel .round-info,
     .game-board-panel .round-multiplier,
     .game-board-panel .deck,
-    .game-board-panel #drawnCards, /* Targeting ID if specific */
+    .game-board-panel #drawnCards,
     .game-board-panel #campaignChoiceAndBettingArea,
     .game-board-panel #gameControls {
-      margin-top: 0.5rem;      /* Reduced top margin */
-      margin-bottom: 0.75rem;   /* Reduced bottom margin */
+      margin-top: 0.1rem;
+      margin-bottom: 0.1rem;
     }
 
     /* Allow round-info and round-multiplier to span wider */
@@ -997,29 +1001,19 @@
       margin-right: auto; /* Center it */
     }
 
-    /* Specific adjustments for tighter spacing if still needed */
-    .game-board-panel .deck {
-      margin-bottom: 1rem; /* Slightly more space before drawn cards if needed */
-    }
-
     #campaignChoiceAndBettingArea {
       margin-top: 5px;
       margin-bottom: 5px;
     }
 
     #gameControls {
-      margin-top: 0.5rem;
+      margin-top: 0.1rem;
     }
 
     /* If the drawn cards container needs specific height management */
     #drawnCards {
       min-height: 120px;
-      margin-bottom: 0.5rem;
-    }
-
-    /* Run over summary specific styles */
-    .run-over-summary .campaign-stat-item {
-      /* ... existing code ... */
+      margin-bottom: 0.25rem;
     }
 
     /* NEW: Style the suffix to look like the right part of the input field */
@@ -1066,8 +1060,7 @@
       color: var(--ncc-text);
       display: flex;
       flex-direction: column;
-      gap: 25px; /* Increased gap between stat blocks */
-      min-height: 80vh; /* Try to make it taller */
+      gap: 25px;
     }
 
     .balatro-stats-wrapper {
@@ -1543,24 +1536,28 @@
     #investmentItemTitle {
         color: var(--ncc-accent);
         margin-top: 0;
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
     }
     #investmentItemDesc {
         color: var(--ncc-text2);
         font-size: 0.9rem;
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
     }
 
     #shopInvestmentControls .player-bet-row,
     #shopInvestmentControls .player-slider-row {
         width: 100%;
-        max-width: 300px;
+        max-width: 350px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     #confirmInvestmentButton {
-        margin-top: 1.5rem;
-        padding: 0.6rem 1.5rem;
-        font-size: 1.1rem;
+        margin-top: 0.5rem;
+        padding: 0.3rem 1.2rem;
+        font-size: 1rem;
     }
 
     .modal-content h2 {
@@ -1683,12 +1680,11 @@
 
       /* Main layout adjustment */
       main {
-          grid-template-columns: 220px 1fr; /* 2-column layout, hiding aux panel */
+          grid-template-columns: 220px 1fr;
           grid-template-rows: 1fr;
-          overflow: hidden; /* Re-enable to prevent unwanted scrollbars */
-          padding: 25px 0.5rem 0.5rem; /* Add padding for space on sides/bottom */
+          overflow: hidden;
+          padding: 25px 0.5rem 0.5rem;
           gap: 0.5rem;
-          /* height: 100vh;  Let flexbox handle height */
       }
       body.campaign-mode-active main {
           grid-template-columns: 220px 1fr;
@@ -1699,7 +1695,7 @@
       .panel {
           height: 100%;
           overflow-y: auto;
-          padding: 0.5rem; /* Re-apply consistent padding */
+          padding: 0.5rem;
       }
 
       /* Left Panel Scaling */
@@ -1770,6 +1766,7 @@
       #campaignChoiceAndBettingArea {
           margin: 0;
           width: 100%;
+          height: 100%;
       }
       .player-bet-row {
           margin-bottom: 5px;
@@ -1805,6 +1802,124 @@
         white-space: normal;
         line-height: 1.2;
         max-width: 90%;
+      }
+
+      /* Shop Modal Scaling for Landscape Mobile */
+      .modal-content.shop-modal-content {
+          padding: 0.5rem;
+          max-height: 95vh;
+          display: flex;
+          flex-direction: column; /* This needs to be column for the main sections to stack vertically */
+      }
+      .shop-modal-content h2 {
+          font-size: 1.1rem;
+          margin: 0 0 0.25rem 0;
+          flex-shrink: 0;
+      }
+      .shop-modal-content > p { display: none; }
+      #shopCurrentProfit {
+          font-size: 1.6rem; /* Increased size */
+          color: var(--ncc-accent3);
+          margin: 0;
+          white-space: nowrap;
+      }
+      .shop-tabs {
+          margin-top: 0;
+          flex-shrink: 0;
+      }
+      .shop-tab-button {
+          padding: 0.3rem 0.8rem;
+          font-size: 0.9rem;
+      }
+
+      /* Two-column layout */
+      .shop-main-content {
+        display: flex;
+        gap: 0.5rem;
+        flex-grow: 1;
+        min-height: 0; /* Critical for flex overflow */
+        margin: 0.5rem 0;
+      }
+      
+      /* Left Pane (Item List) */
+      #shop-items-pane {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        border: 1px solid var(--ncc-card);
+        border-radius: var(--ncc-radius);
+        padding: 0.25rem;
+      }
+      .shop-tab-content { padding: 0.2rem 0; }
+      p.mult-common-desc {
+        font-size: 0.8rem;
+        margin: 0.2rem auto 0.5rem auto;
+        padding: 0 0.2rem;
+        text-align: center;
+      }
+      .shop-items-horizontal-container { gap: 0.5rem; }
+      .shop-item { padding: 0.4rem; }
+      .shop-item.compact { padding: 0.4rem 0.6rem; }
+      .shop-item h3 { font-size: 0.8rem; margin: 0 0 0.2rem 0; }
+      .shop-item p { display: none; } /* Hide verbose description */
+      .shop-item .shop-item-bonus { font-size: 0.75rem; }
+      .shop-item.compact h3 { font-size: 0.8rem; }
+      .shop-item.compact .shop-item-bonus { font-size: 0.7rem; }
+
+      /* Right Pane (Investment Controls) */
+      #shopInvestmentControls {
+        flex: 1.2;
+        padding: 0.5rem;
+        margin-top: 0;
+      }
+      #shopInvestmentControls:not(.hidden) {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      #investmentItemTitle {
+        font-size: 0.9rem;
+        line-height: 1.1;
+        margin: 0 0 0.2rem 0;
+      }
+      #investmentItemDesc {
+        font-size: 0.75rem;
+        line-height: 1.2;
+        margin-bottom: 0.4rem;
+      }
+      #shopInvestmentControls .player-bet-row {
+        margin-bottom: 4px;
+        flex-wrap: nowrap;
+      }
+      #shopInvestmentControls .player-bet-row input[type="number"] {
+        padding: 0.2rem 0.3rem;
+        font-size: 0.85rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      #shopInvestmentControls .bet-input-suffix {
+        display: none; /* Hide " profit" text */
+      }
+      #shopInvestmentControls .player-slider-row { margin: 6px 0; }
+      #shopInvestmentControls input[type="range"] { height: 4px; }
+      #shopInvestmentControls input[type="range"]::-webkit-slider-thumb {
+        width: 16px;
+        height: 16px;
+        margin-top: -6px; /* (track_height - thumb_height) / 2 */
+      }
+
+      /* Bottom Buttons */
+      #confirmInvestmentButton {
+        padding: 0.3rem 0.8rem;
+        font-size: 0.8rem;
+        margin-top: 0.4rem;
+      }
+      #shopContinueButton {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        margin-top: auto;
+        width: 100%;
+        flex-shrink: 0;
       }
     }
     
@@ -2096,9 +2211,9 @@
     }
 
     #confirmInvestmentButton {
-        margin-top: 1rem;
-        padding: 0.6rem 1.5rem;
-        font-size: 1.1rem;
+        margin-top: 0.5rem;
+        padding: 0.3rem 1.2rem;
+        font-size: 1rem;
     }
 
     .modal-content .close-btn {
@@ -2116,6 +2231,789 @@
       cursor: pointer;
       transition: all 0.2s;
     }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #debugArea {
+      position: fixed;
+      top: 80px; /* Adjust to be below your header */
+      right: 20px;
+      z-index: 999;
+      background: var(--ncc-panel);
+      border-radius: var(--ncc-radius);
+      border: 1.5px solid var(--ncc-accent3);
+      box-shadow: 0 0 10px 0 var(--ncc-accent3), var(--ncc-shadow);
+      padding: 0.7rem 0.8rem;
+      color: var(--ncc-accent3);
+      font-size: 0.98rem;
+      /* Remove aux-card properties that are redefined or not needed */
+    }
+    #debugArea h4 {
+      color: var(--ncc-accent3);
+      text-shadow: 0 0 6px var(--ncc-accent3);
+      font-size: 1.05rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+    #debugArea label {
+      color: var(--ncc-text2);
+      font-size: 0.97rem;
+    }
+    #debugNextCard {
+      margin-top: 0.4rem;
+      font-weight: bold;
+      min-height: 20px;
+      color: var(--ncc-accent2);
+      text-shadow: 0 0 6px var(--ncc-accent2);
+    }
+
+    /* Options Modal Styles */
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      text-align: left;
+    }
+    .option-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1rem;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+      background-color: var(--ncc-card);
+      border-radius: 28px;
+      border: 1px solid var(--ncc-border);
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .toggle-switch::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background-color: var(--ncc-text2);
+      top: 2px;
+      left: 3px;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .toggle-switch:checked {
+      background-color: var(--ncc-accent3);
+      border-color: var(--ncc-accent3);
+    }
+    .toggle-switch:checked::before {
+      background-color: var(--ncc-panel);
+      transform: translateX(21px);
+    }
+
+    /* Shop Modal Scaling for Landscape Mobile & Tablet */
+    @media (max-width: 1100px) and (orientation: landscape) {
+      .modal-content.shop-modal-content {
+          padding: 0.5rem;
+          max-height: 95vh;
+          display: flex;
+          flex-direction: column; /* This needs to be column for the main sections to stack vertically */
+      }
+      .shop-modal-content h2 {
+          font-size: 1rem; /* Smaller */
+          margin: 0 0 0.15rem 0; /* Tighter */
+          flex-shrink: 0;
+      }
+      .shop-modal-content > p { display: none; }
+      #shopCurrentProfit {
+          font-size: 1rem; /* Matched to h2 */
+          font-weight: 700; /* Matched to h2 */
+          color: var(--ncc-accent3);
+          margin: 0;
+          white-space: nowrap;
+          flex-shrink: 0;
+      }
+      .shop-tabs {
+          margin-top: 0;
+          flex-shrink: 0;
+      }
+      .shop-tab-button {
+          padding: 0.2rem 0.6rem; /* Smaller */
+          font-size: 0.8rem; /* Smaller */
+      }
+
+      /* Two-column layout */
+      .shop-main-content {
+        display: flex;
+        gap: 0.4rem; /* Tighter */
+        flex-grow: 1;
+        min-height: 0; /* Critical for flex overflow */
+        margin: 0.25rem 0; /* Tighter */
+      }
+      
+      /* Left Pane (Item List) */
+      #shop-items-pane {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        border: 1px solid var(--ncc-card);
+        border-radius: var(--ncc-radius);
+        padding: 0.2rem; /* Tighter */
+      }
+      .shop-tab-content { padding: 0.2rem 0; }
+      p.mult-common-desc {
+        font-size: 0.8rem;
+        margin: 0.2rem auto 0.5rem auto;
+        padding: 0 0.2rem;
+        text-align: center;
+      }
+      .shop-items-horizontal-container { gap: 0.5rem; }
+      .shop-item { padding: 0.4rem; }
+      .shop-item.compact { padding: 0.4rem 0.6rem; }
+      .shop-item h3 { font-size: 0.8rem; margin: 0 0 0.2rem 0; }
+      .shop-item p { display: none; } /* Hide verbose description */
+      .shop-item .shop-item-bonus { font-size: 0.75rem; }
+      .shop-item.compact h3 { font-size: 0.8rem; }
+      .shop-item.compact .shop-item-bonus { font-size: 0.7rem; }
+
+      /* Right Pane (Investment Controls) */
+      #shopInvestmentControls {
+        flex: 1.2;
+        padding: 0.25rem; /* Tighter */
+        margin-top: 0;
+      }
+      #shopInvestmentControls:not(.hidden) {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      #investmentItemTitle {
+        font-size: 0.85rem; /* Smaller */
+        line-height: 1.1;
+        margin: 0 0 0.1rem 0; /* Tighter */
+      }
+      #investmentItemDesc {
+        font-size: 0.7rem; /* Smaller */
+        line-height: 1.1;
+        margin-bottom: 0.25rem; /* Tighter */
+      }
+      #shopInvestmentControls .player-bet-row {
+        margin-bottom: 4px;
+        flex-wrap: nowrap;
+      }
+      #shopInvestmentControls .player-bet-row input[type="number"] {
+        padding: 0.3rem 0.8rem;
+        font-size: 0.8rem;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        border-right: 2px solid var(--ncc-border);
+        border-radius: var(--ncc-radius);
+        text-align: center;
+      }
+      #shopInvestmentControls .bet-input-suffix {
+        display: none; /* Hide " profit" text */
+      }
+      #shopInvestmentControls .player-slider-row { margin: 6px 0; }
+      #shopInvestmentControls input[type="range"] { height: 4px; }
+      #shopInvestmentControls input[type="range"]::-webkit-slider-thumb {
+        width: 16px;
+        height: 16px;
+        margin-top: -6px; /* (track_height - thumb_height) / 2 */
+      }
+
+      /* Bottom Buttons */
+      #confirmInvestmentButton {
+        padding: 0.2rem 0.8rem;
+        font-size: 0.8rem;
+        margin-top: 0.2rem;
+      }
+      #shopContinueButton {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        margin-top: auto;
+        width: 100%;
+        flex-shrink: 0;
+      }
+
+      /* Header Alignment Fixes for Mobile Landscape */
+      .shop-header {
+        align-items: center;
+        margin-bottom: 0.25rem;
+      }
+      .shop-modal-content h2 {
+          font-size: 1rem;
+          margin: 0;
+          flex-shrink: 0;
+      }
+      #shopCurrentProfit {
+        font-size: 1rem; /* Larger */
+        color: var(--ncc-accent3); /* Ensure green */
+        margin: 0;
+        flex-shrink: 0;
+        font-weight: 700;
+      }
+    }
+    
+    @media (max-width: 1100px) and (orientation: portrait) {
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 1.2rem;
+        padding: 1rem;
+      }
+      .panel {
+        min-width: 0;
+        max-width: 100%;
+      }
+      .players-panel {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        justify-content: flex-start;
+        align-items: stretch;
+      }
+      .player-controls {
+        min-width: 180px;
+        max-width: 100%;
+        flex: 1 1 220px;
+        margin-bottom: 0.7rem;
+        margin-right: 0.7rem;
+      }
+      .aux-panel {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .aux-card {
+        padding: 0.7rem 0.5rem 0.8rem 0.5rem;
+      }
+    }
+    @media (max-width: 700px) and (orientation: portrait) {
+      html, body {
+        height: 100%; /* Ensure html/body are viewport height */
+        overflow: hidden; /* Prevent scrolling on the root elements */
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.7rem 1rem;
+        gap: 0.5rem;
+      }
+      .game-title {
+        font-size: 1.3rem;
+      }
+      main {
+        padding: 0.5rem;
+        gap: 0.7rem;
+        flex: 1; /* Allow main to fill space */
+        overflow-y: auto; /* Allow ONLY main content to scroll if absolutely necessary */
+      }
+      .panel {
+        padding: 0.7rem 0.5rem;
+        flex-shrink: 1; /* Allow all panels to shrink to prevent overflow */
+      }
+      .players-panel {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0.7rem;
+        max-width: 100%;
+        margin-bottom: 0.7rem;
+        margin-right: 0;
+      }
+      .player-controls {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 0.7rem;
+        margin-right: 0;
+      }
+      .player-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+      }
+      .player-chips {
+        margin-left: 0;
+        margin-top: 0.2rem;
+      }
+      .player-bet-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.3rem;
+      }
+      .choice-buttons {
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      .game-board-panel {
+        min-height: unset; /* Remove fixed min-height on mobile */
+        gap: 0.7rem;
+        padding: 0.2rem;
+      }
+      .deck {
+        width: 55px;
+        height: 75px;
+        font-size: 1rem;
+      }
+      .drawn-cards {
+        min-height: 60px;
+        gap: 0.2rem;
+      }
+      .card {
+        width: 38px;
+        height: 55px;
+        font-size: 0.8rem;
+      }
+      .round-info, .round-multiplier {
+        font-size: 0.9rem;
+        padding: 0.3rem 0.4rem;
+      }
+      .aux-panel {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .aux-card {
+        padding: 0.5rem 0.3rem 0.6rem 0.3rem;
+      }
+      .campaign-mode-left-panel {
+        min-height: unset; /* Remove fixed min-height on mobile */
+      }
+
+      /* Shop input fixes for portrait */
+      #shopInvestmentControls .player-bet-row {
+        flex-direction: row;
+      }
+      #shopInvestmentControls .player-bet-row input[type="number"] {
+        width: 100%;
+        max-width: 100%;
+        border-right: 2px solid var(--ncc-border);
+        border-radius: var(--ncc-radius);
+        text-align: center;
+      }
+      #shopInvestmentControls .bet-input-suffix {
+        display: none;
+      }
+    }
+
+    /* Tablet-specific Overrides */
+    @media (min-width: 701px) and (max-width: 1100px) {
+      #campaignCentralStage {
+        margin-top: -1.5rem; /* Pull deck/cards up over multiplier's bottom margin */
+      }
+    }
+
+    .round-multiplier-display {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: var(--ncc-text2);
+      transition: all 0.3s ease-in-out;
+    }
+
+    .round-multiplier-display.upgraded {
+      color: var(--ncc-accent3);
+      text-shadow: 0 0 10px var(--ncc-accent3), 0 0 20px var(--ncc-accent3);
+      transform: scale(1.1);
+    }
+
+    .shop-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        border-bottom: 2px solid var(--ncc-card);
+    }
+    .shop-tab-button {
+        padding: 0.7rem 1.5rem;
+        border: none;
+        background: none;
+        color: var(--ncc-text2);
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.2s, background-color 0.2s;
+        border-radius: var(--ncc-radius) var(--ncc-radius) 0 0;
+        border-bottom: 2px solid transparent;
+        transform: translateY(2px);
+    }
+    .shop-tab-button:hover {
+        color: var(--ncc-accent);
+    }
+    .shop-tab-button.active {
+        color: var(--ncc-accent2);
+        background-color: var(--ncc-card);
+        border-bottom-color: var(--ncc-accent2);
+    }
+
+    .shop-tab-content {
+        display: none;
+        padding: 1.5rem 0;
+        animation: fade-in-slow 0.4s;
+    }
+    .shop-tab-content.active {
+        display: block;
+    }
+
+    .shop-items-horizontal-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .shop-item {
+        background: var(--ncc-card);
+        padding: 1rem;
+        border-radius: var(--ncc-radius);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        text-align: left;
+        flex-basis: 180px; /* Give items a base width */
+        flex-grow: 1;
+        max-width: 220px;
+    }
+    
+    .shop-item:hover {
+        border-color: var(--ncc-accent2);
+        transform: translateY(-2px);
+    }
+
+    .shop-item.selected {
+        border-color: var(--ncc-accent);
+        box-shadow: 0 0 15px rgba(var(--ncc-accent-rgb), 0.5);
+    }
+
+    .shop-item.compact {
+        flex-basis: auto;
+        flex-grow: 0;
+        padding: 0.8rem 1rem;
+        text-align: center;
+    }
+    .shop-item.compact h3 {
+        font-size: 1rem;
+        margin: 0;
+    }
+     .shop-item.compact .shop-item-bonus {
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+    
+    .shop-item-info h3 {
+        margin: 0 0 0.5rem 0; 
+        color: var(--ncc-accent2);
+    }
+
+    .shop-item-info p {
+        margin: 0; 
+        font-size: 0.9rem; 
+        color: var(--ncc-text2);
+        line-height: 1.4; /* Tighter line height for shop descriptions */
+        margin-bottom: 0.5rem; /* Space between description and bonus text */
+    }
+    
+    .shop-item-bonus {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: var(--ncc-accent3);
+    }
+
+    .mult-common-desc {
+        text-align: center;
+        color: var(--ncc-text2);
+        font-size: 0.95rem;
+        margin: 0 auto 1.5rem auto;
+        max-width: 80%;
+    }
+
+    #shopInvestmentControls {
+        /* This is now the bottom panel */
+        background: rgba(var(--ncc-card-rgb, var(--ncc-panel-rgb)), 0.5);
+        border-radius: var(--ncc-radius);
+        padding: 1rem;
+        margin-top: 1rem;
+        border: 1px solid var(--ncc-border);
+        animation: fade-in-slow 0.5s;
+    }
+    
+    #investmentItemTitle {
+        color: var(--ncc-accent);
+        margin-top: 0;
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+    }
+    #investmentItemDesc {
+        color: var(--ncc-text2);
+        font-size: 0.9rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    #shopInvestmentControls .player-bet-row,
+    #shopInvestmentControls .player-slider-row {
+        width: 100%;
+        max-width: 350px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #confirmInvestmentButton {
+        margin-top: 0.5rem;
+        padding: 0.3rem 1.2rem;
+        font-size: 1rem;
+    }
+
+    .modal-content .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: 1px solid var(--ncc-text2);
+      color: var(--ncc-text2);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      line-height: 24px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #debugArea {
+      position: fixed;
+      top: 80px; /* Adjust to be below your header */
+      right: 20px;
+      z-index: 999;
+      background: var(--ncc-panel);
+      border-radius: var(--ncc-radius);
+      border: 1.5px solid var(--ncc-accent3);
+      box-shadow: 0 0 10px 0 var(--ncc-accent3), var(--ncc-shadow);
+      padding: 0.7rem 0.8rem;
+      color: var(--ncc-accent3);
+      font-size: 0.98rem;
+      /* Remove aux-card properties that are redefined or not needed */
+    }
+    #debugArea h4 {
+      color: var(--ncc-accent3);
+      text-shadow: 0 0 6px var(--ncc-accent3);
+      font-size: 1.05rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+    #debugArea label {
+      color: var(--ncc-text2);
+      font-size: 0.97rem;
+    }
+    #debugNextCard {
+      margin-top: 0.4rem;
+      font-weight: bold;
+      min-height: 20px;
+      color: var(--ncc-accent2);
+      text-shadow: 0 0 6px var(--ncc-accent2);
+    }
+
+    /* Options Modal Styles */
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      text-align: left;
+    }
+    .option-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1rem;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+      background-color: var(--ncc-card);
+      border-radius: 28px;
+      border: 1px solid var(--ncc-border);
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .toggle-switch::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background-color: var(--ncc-text2);
+      top: 2px;
+      left: 3px;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .toggle-switch:checked {
+      background-color: var(--ncc-accent3);
+      border-color: var(--ncc-accent3);
+    }
+    .toggle-switch:checked::before {
+      background-color: var(--ncc-panel);
+      transform: translateX(21px);
+    }
+
+    .shop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      width: 100%;
+    }
+
+    .shop-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        border-bottom: 2px solid var(--ncc-card);
+    }
+
+    .modal-content.shop-modal-content {
+        max-width: 800px; /* Wider modal for two-column layout */
+    }
+
+    .shop-layout-container {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1.5rem;
+        margin-bottom: 2rem;
+        flex-grow: 1; /* Allow container to fill space */
+        min-height: 350px; /* Give it some space to layout */
+    }
+    
+    #investmentItemTitle {
+        margin-top: 1.5rem;
+    }
+
+    .modal-content h2 {
+      color: var(--ncc-accent);
+      margin: 0;
+      font-size: 1.8rem;
+      text-align: left;
+    }
+
+    .modal-content p {
+      color: var(--ncc-text);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin: 0.5rem 0 1rem 0;
+      text-align: center;
+    }
+
+    .modal-content .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: 1px solid var(--ncc-text2);
+      color: var(--ncc-text2);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      line-height: 24px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #debugArea {
+      position: fixed;
+      top: 80px; /* Adjust to be below your header */
+      right: 20px;
+      z-index: 999;
+      background: var(--ncc-panel);
+      border-radius: var(--ncc-radius);
+      border: 1.5px solid var(--ncc-accent3);
+      box-shadow: 0 0 10px 0 var(--ncc-accent3), var(--ncc-shadow);
+      padding: 0.7rem 0.8rem;
+      color: var(--ncc-accent3);
+      font-size: 0.98rem;
+      /* Remove aux-card properties that are redefined or not needed */
+    }
+    #debugArea h4 {
+      color: var(--ncc-accent3);
+      text-shadow: 0 0 6px var(--ncc-accent3);
+      font-size: 1.05rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+    #debugArea label {
+      color: var(--ncc-text2);
+      font-size: 0.97rem;
+    }
+    #debugNextCard {
+      margin-top: 0.4rem;
+      font-weight: bold;
+      min-height: 20px;
+      color: var(--ncc-accent2);
+      text-shadow: 0 0 6px var(--ncc-accent2);
+    }
+
+    /* Options Modal Styles */
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      text-align: left;
+    }
+    .option-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1rem;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+      background-color: var(--ncc-card);
+      border-radius: 28px;
+      border: 1px solid var(--ncc-border);
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .toggle-switch::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background-color: var(--ncc-text2);
+      top: 2px;
+      left: 3px;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .toggle-switch:checked {
+      background-color: var(--ncc-accent3);
+      border-color: var(--ncc-accent3);
+    }
+    .toggle-switch:checked::before {
+      background-color: var(--ncc-panel);
+      transform: translateX(21px);
+    }
   </style>
 </head>
 <body>
@@ -2130,11 +3028,11 @@
       <!-- <button id="playClassicButton" class="menu-button">Play Classic Mode</button> -->
       <button id="playCampaignButton" class="menu-button">Play Campaign Mode</button>
       <button id="tutorialButton" class="menu-button">How to Play</button>
-      <button id="optionsButton" class="menu-button" disabled>Options (Soon)</button>
+      <button id="optionsButton" class="menu-button">Options</button>
     </div>
   </div>
 
-  <div id="gameViewContainer" style="display: none; flex-direction: column; flex: 1;">
+  <div id="gameViewContainer" style="display: none; flex-direction: column; flex: 1;" tabindex="0">
     <header>
       <div class="header-collapsible-content">
         <div class="game-title"><img src="name.png" alt="Bus or Bust"></div>
@@ -2155,6 +3053,16 @@
         </svg>
       </button>
     </header>
+    <div id="debugArea" style="display: none;">
+      <h4><span class="icon">🐞</span>Debug Info</h4>
+      <div>
+        <label for="toggleDebugNextCard">Show Next Card: </label>
+        <input type="checkbox" id="toggleDebugNextCard" onchange="updateDebugNextCardDisplay()">
+      </div>
+      <div id="debugNextCard" style="margin-top: 5px; font-weight: bold; min-height: 20px;">
+        Next Card: (Hidden)
+      </div>
+    </div>
     <main>
       <section class="panel players-panel" id="classicPlayersPanel">
         <!-- Classic Player cards will go here -->
@@ -2200,27 +3108,19 @@
           <h3><span class="icon">⚡</span>Wall of Shame</h3>
           <div id="wallOfShameContent"></div>
         </div>
-        <div class="aux-card" id="debugArea" style="display: none; margin-top: 15px;">
-          <h4><span class="icon">🐞</span>Debug Info</h4>
-          <div>
-            <label for="toggleDebugNextCard">Show Next Card: </label>
-            <input type="checkbox" id="toggleDebugNextCard" onchange="updateDebugNextCardDisplay()">
-          </div>
-          <div id="debugNextCard" style="margin-top: 5px; font-weight: bold; min-height: 20px;">
-            Next Card: (Hidden)
-          </div>
-        </div>
       </aside>
     </main>
   </div> <!-- Closing gameViewContainer -->
 
   <div id="shopModal" class="modal-overlay" style="display: none;">
     <div class="modal-content shop-modal-content">
-      <h2 id="shopTitle">Capital Investments</h2>
-      <p>Select an upgrade, then use the slider to invest your profit.</p>
-      <div id="shopCurrentProfit" style="font-size: 1.5rem; color: var(--ncc-accent3); margin-bottom: 0;">
-        Available Profit: $0
+      <div class="shop-header">
+        <h2 id="shopTitle">Capital Investments</h2>
+        <div id="shopCurrentProfit">
+          Available Profit: $0
+        </div>
       </div>
+      <p>Select an upgrade, then use the slider to invest your profit.</p>
 
       <!-- TABS -->
       <div class="shop-tabs">
@@ -2228,34 +3128,40 @@
         <button class="shop-tab-button" data-tab="mults">+Mult</button>
       </div>
 
-      <!-- TAB CONTENT -->
-      <div class="shop-tab-content active" id="shop-tab-money">
-        <div class="shop-items-horizontal-container" id="shop-items-money">
-          <!-- Money items will be dynamically inserted here -->
+      <!-- NEW: Main content wrapper -->
+      <div class="shop-main-content">
+        <!-- NEW: Wrapper for item panes -->
+        <div id="shop-items-pane">
+          <!-- TAB CONTENT -->
+          <div class="shop-tab-content active" id="shop-tab-money">
+            <div class="shop-items-horizontal-container" id="shop-items-money">
+              <!-- Money items will be dynamically inserted here -->
+            </div>
+          </div>
+          <div class="shop-tab-content" id="shop-tab-mults">
+            <p class="mult-common-desc">Increase a Round's payout multiplier. Select an upgrade for more details.</p>
+            <div class="shop-items-horizontal-container" id="shop-items-mults">
+              <!-- Multiplier items will be dynamically inserted here -->
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="shop-tab-content" id="shop-tab-mults">
-        <p class="mult-common-desc">Increase a Round's payout multiplier. Select an upgrade for more details.</p>
-        <div class="shop-items-horizontal-container" id="shop-items-mults">
-          <!-- Multiplier items will be dynamically inserted here -->
-        </div>
-      </div>
-      
-      <!-- COMMON INVESTMENT AREA -->
-      <div id="shopInvestmentControls" style="display: none;">
-          <h3 id="investmentItemTitle"></h3>
-          <p id="investmentItemDesc"></p>
+        
+        <!-- COMMON INVESTMENT AREA -->
+        <div id="shopInvestmentControls" class="hidden">
+            <h3 id="investmentItemTitle"></h3>
+            <p id="investmentItemDesc"></p>
 
-            <div class="player-bet-row">
-              <input type="number" id="shopInvestmentAmountInput" placeholder="Amount to spend" min="0">
-              <span class="bet-input-suffix"> profit</span>
-          </div>
-          <div class="player-slider-row">
-              <div class="player-slider-wrapper">
-                  <input type="range" id="shopInvestmentSlider" min="0" max="1000" step="100">
-              </div>
-          </div>
-          <button id="confirmInvestmentButton" class="menu-button">Invest</button>
+              <div class="player-bet-row">
+                <input type="number" id="shopInvestmentAmountInput" placeholder="Amount to spend" min="0">
+                <span class="bet-input-suffix"> profit</span>
+            </div>
+            <div class="player-slider-row">
+                <div class="player-slider-wrapper">
+                    <input type="range" id="shopInvestmentSlider" min="0" max="1000" step="100">
+                </div>
+            </div>
+            <button id="confirmInvestmentButton" class="menu-button">Invest</button>
+        </div>
       </div>
 
       <button id="shopContinueButton" class="menu-button" style="width: 100%; margin-top: auto;">Continue to Next Quota</button>
@@ -2272,6 +3178,19 @@
         <button id="tutorialNextButton">Next</button>
       </div>
       <button id="tutorialCloseButton" class="close-btn">&times;</button>
+    </div>
+  </div>
+
+  <div id="optionsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2>Options</h2>
+      <div class="options-container">
+        <div class="option-item">
+          <label for="debugToggleSwitch">Enable Debug Panel</label>
+          <input type="checkbox" id="debugToggleSwitch" class="toggle-switch">
+        </div>
+      </div>
+      <button id="optionsCloseButton" class="close-btn">&times;</button>
     </div>
   </div>
 

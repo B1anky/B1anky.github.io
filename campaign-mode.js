@@ -28,6 +28,7 @@ let campaignGameInProgress = false;
 let campaignBetLockedForRide = false; // NEW: To lock bet after R1 draw of a ride sequence
 let campaignPreviousBetPercentage = 0.5; // NEW: Store the last bet as a percentage of capital. Default to 50%.
 let isChipAnimationInProgress = false;
+let isStartingNextRound = false;
 
 const baseStartingCapital = 1000; // Capital for each new game attempt for a quota
 const baseInitialQuota = 1500;    
@@ -121,7 +122,8 @@ function startNewCampaignRun() {
         document.getElementById('drawnCards'),
         document.getElementById('campaignChoiceAndBettingArea'),
         document.getElementById('roundInfo'),
-        document.getElementById('roundMultiplier')
+        document.getElementById('roundMultiplier'),
+        document.getElementById('roundMultiplierDisplay')
     ];
     elementsToReset.forEach(el => {
         if (el) {
@@ -145,6 +147,9 @@ function startNewCampaignRun() {
 
     currentQuota = baseInitialQuota;
     
+    // Set starting capital here, including any permanent upgrades.
+    campaignPlayer.chips = baseStartingCapital + campaignState.upgrades.startingChipsBonus;
+
     console.log(`New Run: Initial Quota: ${currentQuota}, Attempts for Quota: ${runAttemptsLeftForQuota}`);
     // showGameNotification(`New Campaign Run! Quota: ${currentQuota}. Attempts: ${runAttemptsLeftForQuota}. Starting Capital: ${baseStartingCapital}`, 'info', 5000);
     
@@ -1139,46 +1144,74 @@ function handleBust() {
     console.log("[CMP] handleBust: Player busted. Campaign Run ending gracefully.");
     const message = `BUSTED! Chips at or below 0. Campaign Run Over!`;
     triggerRunEndSequence(message, 'error');
+    runAttemptsLeftForQuota--;
+    animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-loss', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
+    console.log(`[CMP] Player busted. Attempts left for this quota: ${runAttemptsLeftForQuota}`);
+
+    if (runAttemptsLeftForQuota <= 0) {
+        console.log("[CMP] No attempts left. Run over.");
+        // ... existing code ...
+    }
 }
 
 // New shared function for when a quota is successfully met
-function processSuccessfulQuotaCompletion(fromAction) {
-    console.log(`[CMP] processSuccessfulQuotaCompletion called from: ${fromAction}. Player Chips: ${campaignPlayer.chips}, Quota: ${currentQuota}`);
-    // The profit for a level is the amount of chips earned *above* the quota target.
-    const profitFromThisQuota = campaignPlayer.chips - currentQuota; 
+function processSuccessfulQuotaCompletion(fromAction = "ride") {
+    campaignGameInProgress = false; // The "ride" is over
+    
+    const profitMade = campaignPlayer.chips - currentQuota;
+    campaignState.profit += profitMade; // Add to cumulative run profit
+    animateValueDisplay('#campaignProfitValue', campaignState.profit, { animationClass: 'chips-win' });
+    
+    console.log(`[CMP] QUOTA MET! Quota: ${currentQuota}, Chips: ${campaignPlayer.chips}, Profit: ${profitMade}`);
 
-    // Use campaignState.profit to persist across shop
-    if (profitFromThisQuota > 0) {
-        campaignState.profit += profitFromThisQuota;
-        showGameNotification(`Quota Cleared! You made a profit of $${profitFromThisQuota}!`, 'success', 4000);
+    if (fromAction === 'cashout') {
+        // If they cashed out exactly at quota, just proceed.
+        // If they cashed out over quota, they get profit.
     } else {
-        showGameNotification(`Quota Cleared! You broke even.`, 'success', 4000);
+        animateValueDisplay('#campaignQuotasClearedValue', gamesPlayedInRun, { animationClass: 'chips-win' });
+        
+        // Instead of starting the next round, show the shop.
+        // The shop will then call startNextCampaignRound()
+        showShop();
     }
-    
-    gamesPlayedInRun++; 
-    animateValueDisplay('#campaignQuotasClearedValue', gamesPlayedInRun, { animationClass: 'chips-win' });
-    
-    // Instead of starting the next round, show the shop.
-    // The shop will then call startNextCampaignRound()
-    showShop();
 }
 
-// NEW function, to be called from the shop to proceed.
+// This function is called after the player closes the shop modal.
 function startNextCampaignRound() {
-    console.log("Proceeding to the next quota level from shop.");
+    if (isStartingNextRound) {
+        console.warn("[CMP] startNextCampaignRound called again while already in progress. Ignoring.");
+        return;
+    }
+    isStartingNextRound = true;
 
-    // Recalculate multipliers to include newly purchased upgrades
+    console.log("[CMP] Proceeding to next quota.");
+
+    // Update the profit display to reflect any spending in the shop.
+    animateValueDisplay('#campaignProfitValue', campaignState.profit, {});
+
+    // Recalculate multipliers to include any newly purchased upgrades.
     updateRunMultipliers();
 
-    campaignPreviousBetPercentage = 0.5; // Reset to 50% for a clean start on new quota
+    // Increase the quota for the next level.
     currentQuota = Math.floor(currentQuota * quotaIncreaseFactor);
     animateValueDisplay('#campaignQuotaValue', currentQuota, { animationClass: 'chips-win' });
-    runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL; 
+    gamesPlayedInRun++; // Increment the number of successful quotas cleared.
+    animateValueDisplay('#campaignQuotasClearedValue', gamesPlayedInRun, { animationClass: 'chips-win' });
+
+    // Reset attempts for the new, harder quota.
+    runAttemptsLeftForQuota = ATTEMPTS_PER_QUOTA_LEVEL;
     animateValueDisplay('#campaignAttemptsValue', runAttemptsLeftForQuota, { animationClass: 'chips-win', suffix: ` / ${ATTEMPTS_PER_QUOTA_LEVEL}` });
-    
-    console.log(`[CMP] New Quota: ${currentQuota}. Run Profit: ${campaignState.profit}. Attempts for new quota level reset to: ${runAttemptsLeftForQuota}.`);
-    
+
+    // The player starts the new quota attempt with their base capital + permanent upgrades.
+    // Unspent profit in the shop is retained separately for the next shop instance.
     startNewAttemptForCurrentQuota();
+
+    showGameNotification(`Quota Cleared! Next Quota: ${currentQuota}. Attempts: ${runAttemptsLeftForQuota}`, 'success', 4000);
+
+    // Reset the flag after a short delay to allow UI to settle.
+    setTimeout(() => {
+        isStartingNextRound = false;
+    }, 500);
 }
 
 function handleCashOutMidRide() {

@@ -25,7 +25,7 @@ const SHOP_ITEMS = [
     {
         id: 'startingChips',
         type: 'money',
-        title: 'Financial Cushion',
+        title: 'Snowball',
         description: 'Increase your starting chips for each quota.',
         costText: 'Every $100 spent adds $1 to your start.',
         costPerUnit: 100,
@@ -58,7 +58,7 @@ const SHOP_ITEMS = [
 
 function showShop() {
     selectedShopItem = null;
-    investmentControls.style.display = 'none';
+    investmentControls.classList.add('hidden');
     updateProfitDisplay();
     populateShopTabs();
     
@@ -123,7 +123,7 @@ function selectItem(item) {
     investmentSlider.step = item.costPerUnit;
     investmentSlider.value = 0;
     
-    investmentControls.style.display = 'block';
+    investmentControls.classList.remove('hidden');
 }
 
 function handleInvestment() {
@@ -171,7 +171,7 @@ function switchTab(tabId) {
     });
     // Reset selection when switching tabs
     selectedShopItem = null;
-    investmentControls.style.display = 'none';
+    investmentControls.classList.add('hidden');
     document.querySelectorAll('.shop-item').forEach(div => div.classList.remove('selected'));
 }
 

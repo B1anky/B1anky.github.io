@@ -90,9 +90,6 @@ function loadTheme() {
 function savePlayers() {
   // In classic mode, player data is saved under a specific key.
   localStorage.setItem('classic_players', JSON.stringify(players));
-  // UI updates related to saving might be better handled by the calling function
-  // updateDeckDisplay(); // These seem out of place for a function named savePlayers
-  // updateDebugNextCardDisplay();
 }
 
 // Overarching save game state for classic mode

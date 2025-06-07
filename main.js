@@ -27,12 +27,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const tutorialModal = document.getElementById('tutorialModal');
     const header = document.querySelector('header');
     const headerToggleButton = document.getElementById('headerToggleButton');
+    const optionsModal = document.getElementById('optionsModal');
+    const optionsButton = document.getElementById('optionsButton');
+    const optionsCloseButton = document.getElementById('optionsCloseButton');
+    const debugToggleSwitch = document.getElementById('debugToggleSwitch');
+    const debugArea = document.getElementById('debugArea');
 
     // Load saved theme on initial page load for the main menu
     if (typeof loadTheme === 'function') {
         loadTheme();
     } else {
         console.warn("loadTheme function not found. Theme will not be loaded on main menu.");
+    }
+
+    // --- Settings Logic ---
+    function setDebugMode(enabled) {
+        if (!debugArea) return;
+        debugArea.style.display = enabled ? 'block' : 'none';
+        localStorage.setItem('debugModeEnabled', enabled);
+        if (debugToggleSwitch) {
+            debugToggleSwitch.checked = enabled;
+        }
+        console.log(`Debug mode ${enabled ? 'enabled' : 'disabled'}.`);
+    }
+
+    function loadSettings() {
+        const debugEnabled = localStorage.getItem('debugModeEnabled') === 'true';
+        setDebugMode(debugEnabled);
     }
 
     function setupClassicMode() {
@@ -64,9 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // updateDebugNextCardDisplay and updateDatalist are typically called by the above or startNewGame.
         }
         
-        const debugArea = document.getElementById('debugArea');
-        if (debugArea) debugArea.style.display = 'block';
-
         if (typeof initializeClassicModeView === 'function') initializeClassicModeView();
         if (typeof loadTheme === 'function') loadTheme();
     }
@@ -111,6 +129,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         mainMenu.style.display = 'none';
         gameView.style.display = 'flex';
+        console.log("Attempting to focus game view container...");
+        gameView.focus();
 
         currentGameMode = mode;
         console.log(`Switched to ${mode} mode.`);
@@ -128,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('classicPlayersPanel').style.display = 'none';
             document.getElementById('campaignPlayersPanel').style.display = 'flex';
             resetPlayersButton.style.display = 'none';
-            auxPanel.style.display = 'none';
+            // auxPanel.style.display = 'none'; // This was hiding the parent of the old debug panel
         }
     }
 
@@ -143,6 +163,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         headerToggleButton.addEventListener('click', () => {
             header.classList.toggle('header-expanded');
+        });
+    }
+
+    // --- Options Modal Logic ---
+    if (optionsButton && optionsModal) {
+        optionsButton.addEventListener('click', () => {
+            optionsModal.style.display = 'flex';
+        });
+    }
+    if (optionsCloseButton && optionsModal) {
+        optionsCloseButton.addEventListener('click', () => {
+            optionsModal.style.display = 'none';
+        });
+    }
+    if (debugToggleSwitch) {
+        debugToggleSwitch.addEventListener('change', () => {
+            setDebugMode(debugToggleSwitch.checked);
         });
     }
 
@@ -250,6 +287,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial and responsive adjustments for menu layout
     adjustMenuLogo();
     window.addEventListener('resize', debounce(adjustMenuLogo, 150));
+
+    loadSettings();
 }); 
 
 let notificationTimeout = null;
